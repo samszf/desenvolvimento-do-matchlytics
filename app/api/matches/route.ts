@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+import { and, desc, eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
@@ -17,6 +18,19 @@ const matchSchema = z.object({
   headshots: z.number().int().min(0).max(200),
   adr: z.number().min(0).max(300),
 })
+
+export async function GET() {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+
+  const rows = await db.select({ match: matches, stats: matchStatistics })
+    .from(matches)
+    .leftJoin(matchStatistics, eq(matchStatistics.matchId, matches.id))
+    .where(eq(matches.userId, session.user.id))
+    .orderBy(desc(matches.playedAt))
+
+  return NextResponse.json(rows)
+}
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() })
