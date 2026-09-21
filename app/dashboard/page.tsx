@@ -62,7 +62,7 @@ export default async function DashboardPage() {
             <p className="text-xs font-medium text-[#c9d0dc]">Evolução do K/D</p>
             <p className="mt-2 text-sm leading-6 text-[#738094]">Acompanhe seus últimos resultados e identifique mudanças no desempenho.</p>
             <div className="mt-8 flex h-36 items-end gap-2 rounded-xl border border-white/8 bg-[#0c1118] p-5">
-              {items.slice(0, 8).reverse().map((item, index) => <div key={item.id} className="flex flex-1 flex-col items-center gap-2"><div className="w-full rounded-t-md bg-[#1d6cff]" style={{ height: `${Math.max(18, Math.min(100, (item.kills ?? 0) * 4))}%` }} title={`${item.kills ?? 0} kills`} /><span className="text-[10px] text-[#687588]">{index + 1}</span></div>)}
+              {items.slice(0, 8).reverse().map((item, index) => <div key={item.id} className="flex flex-1 flex-col items-center gap-2"><div className="w-full rounded-t-md bg-[#1d6cff]" style={{ height: `${Math.max(18, Math.min(100, ((item.deaths ?? 0) ? ((item.kills ?? 0) / (item.deaths ?? 1)) * 28 : 0)))}%` }} title={`${item.kills ?? 0} kills`} /><span className="text-[10px] text-[#687588]">{index + 1}</span></div>)}
               {!items.length && <p className="m-auto text-sm text-[#687588]">Aguardando seus dados</p>}
             </div>
           </div>
