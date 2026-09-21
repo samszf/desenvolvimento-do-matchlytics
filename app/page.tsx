@@ -47,7 +47,7 @@ export default function Page() {
           <a href="#metricas" className="transition-colors hover:text-white">Métricas</a>
         </nav>
         <div className="hidden items-center gap-3 md:flex">
-          <a href="#entrar" className="rounded-lg px-4 py-2 text-sm text-[#c9d0dc] transition hover:text-white">Entrar</a>
+          <a href="/sign-in" className="rounded-lg px-4 py-2 text-sm text-[#c9d0dc] transition hover:text-white">Entrar</a>
           <a href="#comecar" className="rounded-lg bg-white px-4 py-2.5 text-sm font-semibold text-[#10151d] transition hover:bg-[#dce8ff]">Começar agora <ArrowRight className="ml-1 inline size-4" /></a>
         </div>
         <button onClick={() => setMenuOpen(!menuOpen)} className="rounded-lg border border-white/10 p-2 text-[#c9d0dc] md:hidden" aria-label={menuOpen ? 'Fechar menu' : 'Abrir menu'}>{menuOpen ? <X /> : <Menu />}</button>
