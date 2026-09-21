@@ -34,7 +34,11 @@ export const summarize = (matches: MatchLike[]) => {
   const adrs = matches.map(m => n(m.adr)).filter((v): v is number => v != null)
   return { total, wins, winRate: total ? wins / total * 100 : null, kd: ratio(kills, deaths), adr: adrs.length ? adrs.reduce((a, b) => a + b, 0) / adrs.length : null, score: total ? matches.reduce((s, m) => s + performanceScore(m), 0) / total : null }
 }
-export const formatMetric = (value: number | null, suffix = '') => value == null ? '—' : `${value.toFixed(1)}${suffix}`
+export const formatMetric = (value: number | string | null | undefined, suffix = '') => {
+  if (value == null || value === '') return '—'
+  const numericValue = Number(value)
+  return Number.isFinite(numericValue) ? `${numericValue.toFixed(1)}${suffix}` : '—'
+}
 
 export type { MatchLike as AnalyticsMatch }
 

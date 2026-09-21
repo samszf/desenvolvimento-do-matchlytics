@@ -1,0 +1,23 @@
+import { notFound, redirect } from 'next/navigation'
+import { headers } from 'next/headers'
+import { eq, and } from 'drizzle-orm'
+import { ArrowLeft, BarChart3, Target } from 'lucide-react'
+import { auth } from '@/lib/auth'
+import { db } from '@/lib/db'
+import { matchStatistics, matches } from '@/lib/db/schema'
+
+const names: Record<string, string> = { mirage: 'Mirage', inferno: 'Inferno', ancient: 'Ancient', nuke: 'Nuke', 'dust-2': 'Dust 2', anubis: 'Anubis', vertigo: 'Vertigo' }
+const metric = (value: number | string | null | undefined) => value == null ? '—' : Number(value).toFixed(2)
+
+export default async function MatchDetails({ params }: { params: Promise<{ id: string }> }) {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) redirect('/sign-in')
+  const { id } = await params
+  const rows = await db.select({ match: matches, stats: matchStatistics }).from(matches).leftJoin(matchStatistics, eq(matchStatistics.matchId, matches.id)).where(and(eq(matches.id, id), eq(matches.userId, session.user.id)))
+  const row = rows[0]
+  if (!row) notFound()
+  const { match, stats } = row
+  const kd = (kills: number | null | undefined, deaths: number | null | undefined) => deaths ? (kills ?? 0) / deaths : null
+  const sides = [{ label: 'Geral', prefix: '' }, { label: 'CT', prefix: 'ct' }, { label: 'TR', prefix: 'tr' }]
+  return <main className="min-h-screen bg-[#080b10] px-5 py-8 text-[#f5f7fa] lg:px-10"><div className="mx-auto max-w-5xl"><a href="/matches" className="flex items-center gap-2 text-sm text-[#8995a5]"><ArrowLeft className="size-4"/>Histórico</a><header className="mt-10 flex items-start justify-between gap-4"><div><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#7fb0ff]">Detalhes da partida</p><h1 className="mt-3 text-4xl font-semibold tracking-tight">{names[match.mapId] ?? match.mapId}</h1><p className="mt-2 text-sm text-[#8995a5]">{new Date(match.playedAt).toLocaleDateString('pt-BR')} · {match.playerScore} : {match.opponentScore}</p></div><span className="rounded-full border border-white/10 px-4 py-2 text-sm">{match.result === 'win' ? 'Vitória' : match.result === 'loss' ? 'Derrota' : 'Empate'}</span></header><section className="mt-8 grid gap-4 md:grid-cols-3">{sides.map(({ label, prefix }) => { const get = (key: string) => stats?.[`${prefix}${key}` as keyof typeof stats] as number | string | null | undefined; return <div className="rounded-2xl border border-white/10 bg-[#111720] p-5" key={label}><h2 className="font-semibold">{label}</h2><div className="mt-5 grid grid-cols-2 gap-4 text-sm"><div><p className="text-[#8995a5]">Kills</p><p className="mt-1 text-xl font-semibold">{get('Kills') ?? '—'}</p></div><div><p className="text-[#8995a5]">Deaths</p><p className="mt-1 text-xl font-semibold">{get('Deaths') ?? '—'}</p></div><div><p className="text-[#8995a5]">K/D</p><p className="mt-1 text-xl font-semibold">{metric(kd(get('Kills') as number, get('Deaths') as number))}</p></div><div><p className="text-[#8995a5]">Assists</p><p className="mt-1 text-xl font-semibold">{get('Assists') ?? '—'}</p></div><div><p className="text-[#8995a5]">Headshots</p><p className="mt-1 text-xl font-semibold">{get('Headshots') ?? '—'}</p></div><div><p className="text-[#8995a5]">ADR</p><p className="mt-1 text-xl font-semibold">{metric(get('Adr'))}</p></div></div></div> })}</section><section className="mt-6 rounded-2xl border border-white/10 bg-[#111720] p-6"><h2 className="flex items-center gap-2 font-semibold"><BarChart3 className="size-4 text-[#5c9bff]"/>Comparativo CT x TR</h2><div className="mt-5 grid grid-cols-3 border-b border-white/10 pb-3 text-sm text-[#8995a5]"><span>Métrica</span><span>CT</span><span>TR</span></div>{[['Kills','ctKills','trKills'],['Deaths','ctDeaths','trDeaths'],['K/D','kdCt','kdTr'],['Assists','ctAssists','trAssists'],['Headshots','ctHeadshots','trHeadshots'],['ADR','ctAdr','trAdr']].map(([label, ct, tr]) => <div className="grid grid-cols-3 border-b border-white/5 py-3 text-sm last:border-0" key={label}><span>{label}</span><span>{ct === 'kdCt' ? metric(kd(stats?.ctKills, stats?.ctDeaths)) : metric(stats?.[ct as keyof typeof stats] as number)}</span><span>{tr === 'kdTr' ? metric(kd(stats?.trKills, stats?.trDeaths)) : metric(stats?.[tr as keyof typeof stats] as number)}</span></div>)}</section><p className="mt-6 flex items-center gap-2 text-sm text-[#8995a5]"><Target className="size-4 text-[#5c9bff]"/>Dados registrados manualmente, sem estimativas de CT/TR.</p></div></main>
+}

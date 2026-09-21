@@ -17,6 +17,9 @@ const matchSchema = z.object({
   assists: z.number().int().min(0).max(200),
   headshots: z.number().int().min(0).max(200),
   adr: z.number().min(0).max(300),
+  kast: z.number().min(0).max(100).optional(),
+  ctKills: z.number().int().min(0).max(200), ctDeaths: z.number().int().min(0).max(200), ctAssists: z.number().int().min(0).max(200), ctHeadshots: z.number().int().min(0).max(200), ctAdr: z.number().min(0).max(300),
+  trKills: z.number().int().min(0).max(200), trDeaths: z.number().int().min(0).max(200), trAssists: z.number().int().min(0).max(200), trHeadshots: z.number().int().min(0).max(200), trAdr: z.number().min(0).max(300),
 })
 
 export async function GET() {
@@ -52,7 +55,9 @@ export async function POST(request: Request) {
   })
   await db.insert(matchStatistics).values({
     id: crypto.randomUUID(), matchId, kills: data.kills, deaths: data.deaths,
-    assists: data.assists, headshots: data.headshots, adr: String(data.adr),
+    assists: data.assists, headshots: data.headshots, adr: String(data.adr), kast: data.kast == null ? null : String(data.kast),
+    ctKills: data.ctKills, ctDeaths: data.ctDeaths, ctAssists: data.ctAssists, ctHeadshots: data.ctHeadshots, ctAdr: String(data.ctAdr),
+    trKills: data.trKills, trDeaths: data.trDeaths, trAssists: data.trAssists, trHeadshots: data.trHeadshots, trAdr: String(data.trAdr),
   })
   return NextResponse.json({ id: matchId }, { status: 201 })
 }
