@@ -3,9 +3,9 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'v0 App',
-  description: 'Created with v0',
-  generator: 'v0.app',
+  title: 'Matchlytics — Evolua com seus dados',
+  description: 'Plataforma de análise de desempenho para jogadores de Counter-Strike 2.',
+  generator: 'Matchlytics',
   icons: {
     icon: [
       {
