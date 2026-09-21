@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { DashboardActions } from '@/components/dashboard-actions'
-import { ArrowRight, BarChart3, Crosshair, Gauge, LogOut, Target, Trophy } from 'lucide-react'
+import { ArrowRight, BarChart3, Crosshair, Gauge, Target, Trophy } from 'lucide-react'
+import { LogoutButton } from '@/components/logout-button'
 import { desc, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { matchStatistics, matches } from '@/lib/db/schema'
@@ -33,7 +34,7 @@ export default async function DashboardPage() {
         </a>
         <div className="flex items-center gap-4">
           <span className="hidden text-sm text-[#8995a5] sm:inline">Olá, {session.user.name}</span>
-          <a href="/api/auth/sign-out" className="flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-[#c9d0dc] transition hover:border-white/20 hover:text-white"><LogOut className="size-4" /> Sair</a>
+          <LogoutButton />
         </div>
       </header>
 
