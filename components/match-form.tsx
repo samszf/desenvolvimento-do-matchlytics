@@ -12,7 +12,7 @@ export function MatchForm({ onClose }: { onClose: () => void }) {
     setStatus('loading')
     setError('')
     const form = new FormData(event.currentTarget)
-    const payload = Object.fromEntries(form.entries())
+    const payload: Record<string, FormDataEntryValue | number> = Object.fromEntries(form.entries())
     for (const key of ['playerScore', 'opponentScore', 'kills', 'deaths', 'assists', 'headshots', 'adr']) payload[key] = Number(payload[key])
     const response = await fetch('/api/matches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
     if (!response.ok) { setError((await response.json()).error ?? 'Não foi possível salvar.'); setStatus('error'); return }
