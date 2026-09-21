@@ -7,7 +7,7 @@ import { Navigation } from '@/components/navigation'
 import { desc, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { matchStatistics, matches } from '@/lib/db/schema'
-import { formatMetric, ratio, summarize } from '@/lib/analytics'
+import { formatMetric, performanceScore, ratio, summarize } from '@/lib/analytics'
 import { KDChart, type KDPoint } from '@/components/kd-chart'
 
 const mapNames: Record<string, string> = { mirage: 'Mirage', inferno: 'Inferno', ancient: 'Ancient', nuke: 'Nuke', 'dust-2': 'Dust 2', anubis: 'Anubis', vertigo: 'Vertigo' }
@@ -28,6 +28,7 @@ export default async function DashboardPage() {
     { label: 'Win rate', value: formatMetric(summary.winRate, '%'), change: summary.total ? `${summary.wins} vitórias registradas` : 'Sem dados ainda', icon: Trophy },
     { label: 'K/D ratio', value: formatMetric(summary.kd), change: summary.total ? 'Média de todas as partidas' : 'Sem dados ainda', icon: Crosshair },
     { label: 'ADR médio', value: formatMetric(summary.adr), change: summary.total ? 'Dano médio por rodada' : 'Sem dados ainda', icon: Gauge },
+    { label: 'Performance Score', value: formatMetric(summary.score), change: summary.total ? 'Média baseada na fórmula Matchlytics' : 'Sem dados ainda', icon: Gauge },
   ]
 
   return (
