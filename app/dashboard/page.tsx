@@ -7,7 +7,8 @@ import { Navigation } from '@/components/navigation'
 import { desc, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { matchStatistics, matches } from '@/lib/db/schema'
-import { formatMetric, summarize } from '@/lib/analytics'
+import { formatMetric, ratio, summarize } from '@/lib/analytics'
+import { KDChart, type KDPoint } from '@/components/kd-chart'
 
 const mapNames: Record<string, string> = { mirage: 'Mirage', inferno: 'Inferno', ancient: 'Ancient', nuke: 'Nuke', 'dust-2': 'Dust 2', anubis: 'Anubis', vertigo: 'Vertigo' }
 
@@ -18,6 +19,10 @@ export default async function DashboardPage() {
   const rows = await db.select().from(matches).leftJoin(matchStatistics, eq(matches.id, matchStatistics.matchId)).where(eq(matches.userId, session.user.id)).orderBy(desc(matches.playedAt))
   const items = rows.map(({ matches: match, match_statistics: stats }) => ({ ...match, ...stats }))
   const summary = summarize(items)
+  const kdData: KDPoint[] = items.slice(0, 8).reverse().map((item, index) => ({
+    label: `${index + 1}`,
+    kd: ratio(Number(item.kills), Number(item.deaths)) ?? 0,
+  }))
   const metrics = [
     { label: 'Partidas analisadas', value: String(summary.total), change: summary.total ? 'Dados atualizados agora' : 'Comece registrando uma partida', icon: BarChart3 },
     { label: 'Win rate', value: formatMetric(summary.winRate, '%'), change: summary.total ? `${summary.wins} vitórias registradas` : 'Sem dados ainda', icon: Trophy },
@@ -52,9 +57,8 @@ export default async function DashboardPage() {
           <div className="rounded-2xl border border-white/8 bg-[#111720] p-6">
             <p className="text-xs font-medium text-[#c9d0dc]">Evolução do K/D</p>
             <p className="mt-2 text-sm leading-6 text-[#738094]">Acompanhe seus últimos resultados e identifique mudanças no desempenho.</p>
-            <div className="mt-8 flex h-36 items-end gap-2 rounded-xl border border-white/8 bg-[#0c1118] p-5">
-              {items.slice(0, 8).reverse().map((item, index) => <div key={item.id} className="flex flex-1 flex-col items-center gap-2"><div className="w-full rounded-t-md bg-[#1d6cff]" style={{ height: `${Math.max(18, Math.min(100, ((item.deaths ?? 0) ? ((item.kills ?? 0) / (item.deaths ?? 1)) * 28 : 0)))}%` }} title={`${item.kills ?? 0} kills`} /><span className="text-[10px] text-[#687588]">{index + 1}</span></div>)}
-              {!items.length && <p className="m-auto text-sm text-[#687588]">Aguardando seus dados</p>}
+            <div className="mt-8 rounded-xl border border-white/8 bg-[#0c1118] p-4 sm:p-5">
+              <KDChart data={kdData} />
             </div>
           </div>
           <div className="rounded-2xl border border-white/8 bg-[#111720] p-6">
