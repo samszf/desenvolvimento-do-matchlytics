@@ -1,8 +1,9 @@
 import { and, desc, eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-import { ArrowLeft, CalendarDays, ChevronRight, Crosshair, Plus, Target, Trophy } from 'lucide-react'
+import { CalendarDays, ChevronRight, Crosshair, Plus, Trophy } from 'lucide-react'
 import { auth } from '@/lib/auth'
+import { Navigation } from '@/components/navigation'
 import { db } from '@/lib/db'
 import { matchStatistics, matches } from '@/lib/db/schema'
 
@@ -27,13 +28,7 @@ export default async function MatchesPage() {
 
   return (
     <main className="min-h-screen bg-[#080b10] text-[#f5f7fa]">
-      <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-6 lg:px-8">
-        <a href="/dashboard" className="flex items-center gap-3" aria-label="Voltar ao dashboard">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-[#1d6cff] shadow-[0_0_28px_rgba(29,108,255,0.35)]"><Target className="size-5" /></span>
-          <span className="text-lg font-semibold tracking-[-0.03em]">match<span className="text-[#5c9bff]">lytics</span></span>
-        </a>
-        <a href="/dashboard" className="flex items-center gap-2 text-sm text-[#8995a5] transition hover:text-white"><ArrowLeft className="size-4" /> Dashboard</a>
-      </header>
+      <Navigation />
 
       <section className="mx-auto max-w-7xl px-5 pb-16 pt-8 lg:px-8">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">

@@ -2,8 +2,8 @@ import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { DashboardActions } from '@/components/dashboard-actions'
-import { ArrowRight, BarChart3, Crosshair, Gauge, Target, Trophy } from 'lucide-react'
-import { LogoutButton } from '@/components/logout-button'
+import { ArrowRight, BarChart3, Crosshair, Gauge, Trophy } from 'lucide-react'
+import { Navigation } from '@/components/navigation'
 import { desc, eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { matchStatistics, matches } from '@/lib/db/schema'
@@ -27,16 +27,7 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[#080b10] text-[#f5f7fa]">
-      <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-6 lg:px-8">
-        <a href="/dashboard" className="flex items-center gap-3" aria-label="Matchlytics dashboard">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-[#1d6cff] shadow-[0_0_28px_rgba(29,108,255,0.35)]"><Target className="size-5" /></span>
-          <span className="text-lg font-semibold tracking-[-0.03em]">match<span className="text-[#5c9bff]">lytics</span></span>
-        </a>
-        <div className="flex items-center gap-4">
-          <span className="hidden text-sm text-[#8995a5] sm:inline">Olá, {session.user.name}</span>
-          <LogoutButton />
-        </div>
-      </header>
+      <Navigation userName={session.user.name} />
 
       <section className="mx-auto max-w-7xl px-5 pb-16 pt-10 lg:px-8">
         <div className="rounded-3xl border border-[#255bbd]/30 bg-[linear-gradient(120deg,#10234a,#0f1724_60%,#111720)] p-7 sm:p-10">
