@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
+import { DashboardActions } from '@/components/dashboard-actions'
 import { ArrowRight, BarChart3, Crosshair, Gauge, LogOut, Target, Trophy } from 'lucide-react'
 
 const metrics = [
@@ -32,7 +33,7 @@ export default async function DashboardPage() {
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#7fb0ff]">Seu espaço de evolução</p>
           <h1 className="mt-3 max-w-2xl text-4xl font-semibold tracking-[-0.05em] sm:text-5xl">Jogue mais consciente, {session.user.name.split(' ')[0]}.</h1>
           <p className="mt-4 max-w-xl text-sm leading-6 text-[#a9b6ca]">Registre sua primeira partida para transformar desempenho em decisões mais claras dentro do servidor.</p>
-          <button className="mt-7 rounded-xl bg-[#1d6cff] px-5 py-3.5 text-sm font-semibold shadow-[0_12px_35px_rgba(29,108,255,0.25)] transition hover:bg-[#3b82ff]">Registrar partida <ArrowRight className="ml-2 inline size-4" /></button>
+          <DashboardActions />
         </div>
 
         <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
