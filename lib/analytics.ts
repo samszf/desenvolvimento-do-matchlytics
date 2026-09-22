@@ -9,6 +9,8 @@ export type MatchLike = {
   headshots?: number | null
   adr?: number | string | null
   kast?: number | string | null
+  ctKills?: number | null; ctDeaths?: number | null; ctAssists?: number | null; ctHeadshots?: number | null; ctAdr?: number | string | null
+  trKills?: number | null; trDeaths?: number | null; trAssists?: number | null; trHeadshots?: number | null; trAdr?: number | string | null
 }
 
 const n = (value: number | string | null | undefined) => value == null ? null : Number(value)
