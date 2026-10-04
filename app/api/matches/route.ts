@@ -20,7 +20,7 @@ const matchSchema = z.object({
   kast: z.number().min(0).max(100).optional(),
   ctKills: z.number().int().min(0).max(200), ctDeaths: z.number().int().min(0).max(200), ctAssists: z.number().int().min(0).max(200), ctHeadshots: z.number().int().min(0).max(200), ctAdr: z.number().min(0).max(300),
   trKills: z.number().int().min(0).max(200), trDeaths: z.number().int().min(0).max(200), trAssists: z.number().int().min(0).max(200), trHeadshots: z.number().int().min(0).max(200), trAdr: z.number().min(0).max(300),
-})
+}).refine((data) => data.headshots <= data.kills, { message: 'Headshots não pode ser maior que Kills.' }).refine((data) => data.ctHeadshots <= data.ctKills && data.trHeadshots <= data.trKills, { message: 'Headshots por lado não pode ser maior que Kills.' }).refine((data) => data.ctKills + data.trKills === data.kills && data.ctDeaths + data.trDeaths === data.deaths && data.ctAssists + data.trAssists === data.assists && data.ctHeadshots + data.trHeadshots === data.headshots || [data.ctKills, data.ctDeaths, data.ctAssists, data.ctHeadshots, data.trKills, data.trDeaths, data.trAssists, data.trHeadshots].every((value) => value === 0), { message: 'As estatísticas CT/TR não conferem com os totais gerais.' })
 
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() })
