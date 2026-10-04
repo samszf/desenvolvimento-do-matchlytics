@@ -1,5 +1,3 @@
-import { parseEvent, parseHeader, parsePlayerInfo } from '@laihoe/demoparser2'
-
 export type ImportedPlayer = { steamId: string; name: string }
 export type ImportedMatch = {
   map: string | null
@@ -23,7 +21,8 @@ function rows(value: unknown): Record<string, unknown>[] {
 function number(value: unknown) { return typeof value === 'number' && Number.isFinite(value) ? value : null }
 function playerName(player: Record<string, unknown>) { return String(player.name ?? player.player_name ?? player.steamid ?? player.steamId ?? 'Jogador') }
 
-export function parseDemo(buffer: Buffer): ImportedMatch {
+export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
+  const { parseEvent, parseHeader, parsePlayerInfo } = await import('@laihoe/demoparser2')
   const warnings: string[] = []
   const header = parseHeader(buffer) as Record<string, unknown>
   const info = rows(parsePlayerInfo(buffer))

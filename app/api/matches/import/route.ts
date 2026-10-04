@@ -14,7 +14,8 @@ export async function POST(request: Request) {
   if (!(file instanceof File) || !file.name.toLowerCase().endsWith('.dem')) return NextResponse.json({ error: 'Selecione um arquivo .dem válido.' }, { status: 400 })
   if (file.size > 300 * 1024 * 1024) return NextResponse.json({ error: 'O arquivo excede o limite de 300 MB.' }, { status: 400 })
   try {
-    return NextResponse.json(parseDemo(Buffer.from(await file.arrayBuffer())))
+    const parsed = await parseDemo(Buffer.from(await file.arrayBuffer()))
+    return NextResponse.json(parsed)
   } catch {
     return NextResponse.json({ error: 'Não foi possível analisar esta demo. Ela pode estar corrompida ou utilizar um formato ainda não suportado.' }, { status: 422 })
   }
