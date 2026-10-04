@@ -33,7 +33,7 @@ export default async function MatchesPage() {
       <section className="mx-auto max-w-7xl px-5 pb-16 pt-8 lg:px-8">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
           <div><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#7fb0ff]">Seu histórico</p><h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em]">Partidas</h1><p className="mt-3 max-w-xl text-sm leading-6 text-[#8995a5]">Revise seus resultados e acompanhe os números que definem sua evolução.</p></div>
-          <a href="/matches/new" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1d6cff] px-4 py-3 text-sm font-semibold transition hover:bg-[#3b82ff]"><Plus className="size-4" /> Registrar partida</a>
+          <div className="flex flex-col gap-3 sm:flex-row"><a href="/matches/import" className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-3 text-sm font-semibold transition hover:border-[#4c8dff] hover:text-[#9bc0ff]">Importar partida</a><a href="/matches/new" className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1d6cff] px-4 py-3 text-sm font-semibold transition hover:bg-[#3b82ff]"><Plus className="size-4" /> Nova partida</a></div>
         </div>
 
         <div className="mt-8 overflow-hidden rounded-2xl border border-white/8 bg-[#111720]">
