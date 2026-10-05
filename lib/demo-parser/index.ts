@@ -26,6 +26,12 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
   const rawPlayers = Array.from(new Map(info.map((player) => { const steamId = playerKey(player); return [steamId, { steamId, name: text(field(player, 'name', 'player_name', 'playerName')) || 'Jogador', team: field(player, 'team', 'team_num', 'teamNumber') == null ? null : text(field(player, 'team', 'team_num', 'teamNumber')) }] })).values()).filter((player) => player.steamId)
   const statMap = new Map<string, { kills: number; deaths: number; assists: number; headshots: number }>(rawPlayers.map((player) => [player.steamId, { kills: 0, deaths: 0, assists: 0, headshots: 0 }]))
   const deaths = rows(parseEvent(buffer, 'player_death', ['name', 'steamid', 'xuid', 'assister_steamid', 'assister_xuid', 'assister_name', 'headshot'], ['attacker_steamid', 'attacker_xuid', 'attacker_name', 'attacker']))
+  const playerNames = new Map(rawPlayers.map((player) => [player.steamId, player.name]))
+  const ensurePlayer = (id: string, name?: unknown) => {
+    if (!id) return
+    if (!statMap.has(id)) statMap.set(id, { kills: 0, deaths: 0, assists: 0, headshots: 0 })
+    if (!playerNames.has(id) && name != null) playerNames.set(id, text(name))
+  }
   const seen = new Set<string>()
   for (const [index, event] of deaths.entries()) {
     const attacker = text(field(event, 'attacker_steamid', 'attacker_xuid', 'attackerSteamId', 'attacker'))
@@ -34,15 +40,19 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
     const key = `${index}:${attacker}:${victim}:${assister}:${text(field(event, 'headshot', 'is_headshot'))}`
     if (seen.has(key)) continue
     seen.add(key)
+    ensurePlayer(attacker, field(event, 'attacker_name', 'attackerName'))
+    ensurePlayer(victim, field(event, 'name', 'victim_name', 'victimName'))
+    ensurePlayer(assister, field(event, 'assister_name', 'assisterName'))
     if (statMap.has(attacker)) { const stat = statMap.get(attacker)!; stat.kills += 1; if (isHeadshot(field(event, 'headshot', 'is_headshot'))) stat.headshots += 1 }
     if (statMap.has(victim)) statMap.get(victim)!.deaths += 1
     if (statMap.has(assister)) statMap.get(assister)!.assists += 1
   }
-  const players = rawPlayers.map((player) => ({ ...player, stats: metrics(statMap.get(player.steamId) ?? { kills: 0, deaths: 0, assists: 0, headshots: 0 }) }))
+  const players = [...statMap.entries()].map(([steamId, raw]) => ({ steamId, name: playerNames.get(steamId) || 'Jogador', team: rawPlayers.find((player) => player.steamId === steamId)?.team ?? null, stats: metrics(raw) }))
   if (!players.length) warnings.push('Não foi possível identificar jogadores nesta demo.')
   if (!deaths.length) warnings.push('A demo não expôs eventos de eliminação suficientes para calcular estatísticas automaticamente.')
   const empty = metrics({ kills: 0, deaths: 0, assists: 0, headshots: 0 })
-  return { map: typeof header.map_name === 'string' ? header.map_name : typeof header.map === 'string' ? header.map : null, playedAt: null, players, stats: empty, source: 'demo', warnings }
+  const selected = players.reduce((best, player) => (player.stats.kills ?? 0) > (best?.stats.kills ?? -1) ? player : best, players[0])
+  return { map: typeof header.map_name === 'string' ? header.map_name : typeof header.map === 'string' ? header.map : null, playedAt: null, players, stats: selected?.stats ?? empty, source: 'demo', warnings }
 }
 
 export function calculateImportedMetrics(stats: ImportedStats) { return { kd: stats.deaths == null ? null : stats.deaths > 0 ? (stats.kills ?? 0) / stats.deaths : stats.kills ?? 0, hsPercent: stats.kills == null || stats.kills === 0 ? 0 : (stats.headshots ?? 0) / stats.kills * 100 } }
