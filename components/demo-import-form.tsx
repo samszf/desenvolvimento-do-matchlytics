@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { upload } from '@vercel/blob/client'
 import { CheckCircle2, FileUp, Loader2, UploadCloud } from 'lucide-react'
 import type { ImportedMatch } from '@/lib/demo-parser'
 
@@ -25,9 +26,15 @@ export function DemoImportForm() {
     setLoading(true)
     setError('')
     try {
-      const form = new FormData()
-      form.append('file', file)
-      const response = await fetch('/api/matches/import', { method: 'POST', body: form })
+      const blob = await upload(`demos/${file.name}`, file, {
+        access: 'private',
+        handleUploadUrl: '/api/matches/import/upload',
+      })
+      const response = await fetch('/api/matches/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pathname: blob.pathname }),
+      })
       const contentType = response.headers.get('content-type') ?? ''
       const payload = contentType.includes('application/json') ? await response.json() : null
       if (!response.ok) {
