@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     if (!session?.user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
 
     const body = await request.json().catch(() => null) as { pathname?: string }
-    if (!body?.pathname || !body.pathname.endsWith('.dem')) {
+    if (!body?.pathname || !body.pathname.toLowerCase().endsWith('.dem')) {
       return NextResponse.json({ error: 'Envie uma demo válida pelo upload direto.' }, { status: 400 })
     }
 

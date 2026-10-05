@@ -46,7 +46,10 @@ export function DemoImportForm() {
       const payload = await response.json().catch(() => null)
       if (!response.ok || !payload) setError(payload?.error ?? `Não foi possível analisar esta demo (erro ${response.status}).`)
       else { setData(payload); setPlayer(payload.players?.[0]?.steamId ?? '') }
-    } catch { setError('Não foi possível conectar ao analisador. Tente novamente.') } finally { setLoading(false) }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : ''
+      setError(message.includes('BLOB_READ_WRITE_TOKEN') ? 'O armazenamento de demos não está configurado neste ambiente.' : message.includes('413') || message.toLowerCase().includes('payload') ? 'A demo excede o limite aceito pelo upload. Tente um arquivo menor.' : 'Não foi possível conectar ao analisador. Tente novamente.')
+    } finally { setLoading(false) }
   }
 
   const selectedPlayer = data?.players.find((item) => item.steamId === player) ?? null

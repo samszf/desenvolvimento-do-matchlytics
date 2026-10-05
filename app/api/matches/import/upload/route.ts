@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       body,
       request,
       onBeforeGenerateToken: async () => ({
-        allowedContentTypes: ['application/octet-stream', 'application/octet-stream; charset=binary'],
+        allowedContentTypes: ['*/*'],
         maximumSizeInBytes: 300 * 1024 * 1024,
         addRandomSuffix: true,
         tokenPayload: JSON.stringify({ userId: session.user.id }),
