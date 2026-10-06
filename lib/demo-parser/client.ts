@@ -17,8 +17,9 @@ async function loadParser(): Promise<Parser> {
         const parser = window.wasm_bindgen
         if (!parser) throw new Error('Parser WASM não foi exposto pelo script')
         await parser(await wasmResponse.arrayBuffer())
+        if (typeof parser.parseHeader !== 'function' || typeof parser.parseEvent !== 'function') throw new Error('O módulo WASM foi carregado, mas as funções do analisador não estão disponíveis')
         resolve(parser)
-      } catch (error) { reject(error) }
+      } catch (error) { parserPromise = null; reject(error) }
     }
     if (existing) {
       if (window.wasm_bindgen) finish()

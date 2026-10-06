@@ -45,7 +45,7 @@ export function DemoImportForm() {
       if (!payload.players.length) setError('Não foi possível analisar esta demo. Verifique se o arquivo é uma demo válida do Counter-Strike 2.')
       else { setData(payload); setPlayer(payload.players[0]?.steamId ?? '') }
     } catch (error) {
-      const message = error instanceof Error ? error.message : ''
+      const message = error instanceof Error ? error.message : String(error)
       setError(message || 'Não foi possível analisar esta demo. Verifique se o arquivo é uma demo válida do Counter-Strike 2.')
     } finally { setLoading(false) }
   }
