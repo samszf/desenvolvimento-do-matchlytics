@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { upload } from '@vercel/blob/client'
+import { parseDemoInBrowser } from '@/lib/demo-parser/client'
 import { CheckCircle2, FileUp, Loader2, UploadCloud } from 'lucide-react'
 import type { ImportedMatch, ImportedPlayer, ImportedStats } from '@/lib/demo-parser'
 
@@ -41,14 +41,12 @@ export function DemoImportForm() {
     if (!file) return
     setLoading(true); setError('')
     try {
-      const blob = await upload(`demos/${file.name}`, file, { access: 'private', handleUploadUrl: '/api/matches/import/upload' })
-      const response = await fetch('/api/matches/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pathname: blob.pathname }) })
-      const payload = await response.json().catch(() => null)
-      if (!response.ok || !payload) setError(payload?.error ?? `Não foi possível analisar esta demo (erro ${response.status}).`)
-      else { setData(payload); setPlayer(payload.players?.[0]?.steamId ?? '') }
+      const payload = await parseDemoInBrowser(file)
+      if (!payload.players.length) setError('Não foi possível analisar esta demo. Verifique se o arquivo é uma demo válida do Counter-Strike 2.')
+      else { setData(payload); setPlayer(payload.players[0]?.steamId ?? '') }
     } catch (error) {
       const message = error instanceof Error ? error.message : ''
-      setError(message.includes('BLOB_READ_WRITE_TOKEN') ? 'O armazenamento de demos não está configurado neste ambiente.' : message.includes('413') || message.toLowerCase().includes('payload') ? 'A demo excede o limite aceito pelo upload. Tente um arquivo menor.' : 'Não foi possível conectar ao analisador. Tente novamente.')
+      setError(message.toLowerCase().includes('wasm') || message.toLowerCase().includes('webassembly') ? 'Não foi possível iniciar o analisador de demos.' : 'Não foi possível analisar esta demo. Verifique se o arquivo é uma demo válida do Counter-Strike 2.')
     } finally { setLoading(false) }
   }
 
