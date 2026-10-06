@@ -1,4 +1,4 @@
-let wasm_bindgen;
+var wasm_bindgen;
 (function() {
     const __exports = {};
     let script_src;

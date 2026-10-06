@@ -10,7 +10,7 @@ async function loadParser(): Promise<Parser> {
   parserPromise ??= new Promise((resolve, reject) => {
     const existing = document.querySelector<HTMLScriptElement>('script[data-demoparser]')
     const script = existing ?? document.createElement('script')
-    const finish = () => { const parser = window.wasm_bindgen; if (!parser) reject(new Error('WASM parser não foi carregado')); else parser('/demoparser2_bg.wasm').then(() => resolve(parser)).catch(reject) }
+    const finish = () => { const parser = window.wasm_bindgen; if (!parser) { reject(new Error('WASM parser não foi carregado')); return } parser('/demoparser2_bg.wasm').then(() => resolve(parser)).catch(reject) }
     if (existing) finish()
     else { script.src = '/demoparser2.js'; script.dataset.demoparser = 'true'; script.onload = finish; script.onerror = () => reject(new Error('Falha ao carregar o parser WASM')); document.head.appendChild(script) }
   })
