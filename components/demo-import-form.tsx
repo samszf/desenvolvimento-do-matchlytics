@@ -46,7 +46,7 @@ export function DemoImportForm() {
       else { setData(payload); setPlayer(payload.players[0]?.steamId ?? '') }
     } catch (error) {
       const message = error instanceof Error ? error.message : ''
-      setError(message.toLowerCase().includes('wasm') || message.toLowerCase().includes('webassembly') ? 'Não foi possível iniciar o analisador de demos.' : 'Não foi possível analisar esta demo. Verifique se o arquivo é uma demo válida do Counter-Strike 2.')
+      setError(message || 'Não foi possível analisar esta demo. Verifique se o arquivo é uma demo válida do Counter-Strike 2.')
     } finally { setLoading(false) }
   }
 

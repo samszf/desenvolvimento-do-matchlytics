@@ -10,9 +10,22 @@ async function loadParser(): Promise<Parser> {
   parserPromise ??= new Promise((resolve, reject) => {
     const existing = document.querySelector<HTMLScriptElement>('script[data-demoparser]')
     const script = existing ?? document.createElement('script')
-    const finish = () => { const parser = window.wasm_bindgen; if (!parser) { reject(new Error('WASM parser não foi carregado')); return } parser('/demoparser2_bg.wasm').then(() => resolve(parser)).catch(reject) }
-    if (existing) finish()
-    else { script.src = '/demoparser2.js'; script.dataset.demoparser = 'true'; script.onload = finish; script.onerror = () => reject(new Error('Falha ao carregar o parser WASM')); document.head.appendChild(script) }
+    const finish = async () => {
+      try {
+        const wasmResponse = await fetch('/demoparser2_bg.wasm', { cache: 'no-store' })
+        if (!wasmResponse.ok) throw new Error(`WASM indisponível (${wasmResponse.status})`)
+        const parser = window.wasm_bindgen
+        if (!parser) throw new Error('Parser WASM não foi exposto pelo script')
+        await parser(await wasmResponse.arrayBuffer())
+        resolve(parser)
+      } catch (error) { reject(error) }
+    }
+    if (existing) {
+      if (window.wasm_bindgen) finish()
+      else existing.addEventListener('load', () => finish(), { once: true })
+    } else {
+      script.src = '/demoparser2.js'; script.dataset.demoparser = 'true'; script.onload = () => finish(); script.onerror = () => reject(new Error('Falha ao carregar o parser WASM')); document.head.appendChild(script)
+    }
   })
   return parserPromise
 }
