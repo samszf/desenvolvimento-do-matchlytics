@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { parseDemoInBrowser } from '@/lib/demo-parser/client'
+import { upload } from '@vercel/blob/client'
 import { CheckCircle2, FileUp, Loader2, UploadCloud } from 'lucide-react'
 import type { ImportedMatch, ImportedPlayer, ImportedStats } from '@/lib/demo-parser'
 
@@ -41,12 +41,16 @@ export function DemoImportForm() {
     if (!file) return
     setLoading(true); setError('')
     try {
-      const payload = await parseDemoInBrowser(file)
-      if (!payload.players.length) setError('Não foi possível analisar esta demo. Verifique se o arquivo é uma demo válida do Counter-Strike 2.')
+      const blob = await upload(`demos/${file.name}`, file, { access: 'private', handleUploadUrl: '/api/matches/import/upload' })
+      const response = await fetch('/api/matches/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pathname: blob.pathname }) })
+      const payload = await response.json().catch(() => null)
+      if (!response.ok || !payload) throw new Error(payload?.error ?? `Falha ao analisar demo (${response.status})`)
+      if (!payload.players?.length) setError('Não foi possível identificar jogadores nesta demo.')
       else { setData(payload); setPlayer(payload.players[0]?.steamId ?? '') }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
-      setError(message || 'Não foi possível analisar esta demo. Verifique se o arquivo é uma demo válida do Counter-Strike 2.')
+      const normalized = message.toLowerCase()
+      setError(normalized.includes('unreachable') || normalized.includes('wasm trap') ? 'O analisador foi iniciado, mas esta demo não pôde ser lida. Use um arquivo .dem válido do CS2 (de preferência uma demo recém-gravada).' : message || 'Não foi possível analisar esta demo. Verifique se o arquivo é uma demo válida do Counter-Strike 2.')
     } finally { setLoading(false) }
   }
 

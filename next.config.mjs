@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverExternalPackages: ['@laihoe/demoparser2'],
   experimental: {
     proxyClientMaxBodySize: '300mb',
   },
