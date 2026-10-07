@@ -41,7 +41,7 @@ export function DemoImportForm() {
     if (!file) return
     setLoading(true); setError('')
     try {
-      const blob = await upload(`demos/${file.name}`, file, { access: 'private', handleUploadUrl: '/api/matches/import/upload' })
+      const blob = await upload(`demos/${file.name}`, file, { access: 'private', contentType: 'application/octet-stream', handleUploadUrl: '/api/matches/import/upload' })
       const response = await fetch('/api/matches/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pathname: blob.pathname }) })
       const payload = await response.json().catch(() => null)
       if (!response.ok || !payload) throw new Error(payload?.error ?? `Falha ao analisar demo (${response.status})`)
