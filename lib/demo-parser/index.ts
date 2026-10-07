@@ -33,9 +33,13 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
       const value = text(player[key])
       if (value) aliases.set(value, canonical)
     }
+    for (const key of ['name', 'player_name', 'playerName']) {
+      const value = text(player[key])
+      if (value) aliases.set(value, canonical)
+    }
   }
   const resolvePlayer = (value: unknown) => aliases.get(text(value)) ?? text(value)
-  const deaths = rows(parseEvent(buffer, 'player_death', ['name', 'steamid', 'xuid', 'userid', 'attacker', 'assister', 'attacker_steamid', 'assister_steamid', 'headshot'], ['userid', 'attacker', 'assister', 'headshot', 'attacker_steamid', 'assister_steamid']))
+  const deaths = rows(parseEvent(buffer, 'player_death', ['name', 'player_name', 'steamid', 'xuid', 'userid', 'attacker', 'assister', 'attacker_steamid', 'assister_steamid', 'headshot'], ['userid', 'attacker', 'assister', 'headshot', 'attacker_steamid', 'assister_steamid']))
   const playerNames = new Map(rawPlayers.map((player) => [player.steamId, player.name]))
   const ensurePlayer = (id: string, name?: unknown) => {
     if (!id) return
@@ -45,13 +49,13 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
   const seen = new Set<string>()
   for (const [index, event] of deaths.entries()) {
     const attacker = resolvePlayer(field(event, 'attacker_steamid', 'attackerSteamId', 'attacker_xuid', 'attacker'))
-    const victim = resolvePlayer(field(event, 'steamid', 'steamId', 'xuid', 'victim_steamid', 'userid', 'victim'))
+    const victim = resolvePlayer(field(event, 'steamid', 'steamId', 'xuid', 'victim_steamid', 'victim_xuid', 'name', 'victim_name', 'userid', 'victim'))
     const assister = resolvePlayer(field(event, 'assister_steamid', 'assisterSteamId', 'assister_xuid', 'assister'))
     const key = `${index}:${attacker}:${victim}:${assister}:${text(field(event, 'headshot', 'is_headshot'))}`
     if (seen.has(key)) continue
     seen.add(key)
     ensurePlayer(attacker, field(event, 'attacker_name', 'attackerName'))
-    ensurePlayer(victim, field(event, 'name', 'victim_name', 'victimName'))
+    ensurePlayer(victim, field(event, 'name', 'player_name', 'victim_name', 'victimName'))
     ensurePlayer(assister, field(event, 'assister_name', 'assisterName'))
     if (statMap.has(attacker)) { const stat = statMap.get(attacker)!; stat.kills += 1; if (isHeadshot(field(event, 'headshot', 'is_headshot'))) stat.headshots += 1 }
     if (statMap.has(victim)) statMap.get(victim)!.deaths += 1
