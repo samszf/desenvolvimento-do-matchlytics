@@ -46,7 +46,7 @@ export function DemoImportForm() {
       const payload = await response.json().catch(() => null)
       if (!response.ok || !payload) throw new Error(payload?.error ?? `Falha ao analisar demo (${response.status})`)
       if (!payload.players?.length) setError('Não foi possível identificar jogadores nesta demo.')
-      else { setData(payload); setPlayer(payload.players[0]?.steamId ?? '') }
+      else { setData(payload); setPlayer('') }
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       const normalized = message.toLowerCase()
