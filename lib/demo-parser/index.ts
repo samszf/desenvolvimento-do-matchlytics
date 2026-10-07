@@ -25,6 +25,16 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
   const info = rows(parsePlayerInfo(buffer))
   const rawPlayers = Array.from(new Map(info.map((player) => { const steamId = playerKey(player); return [steamId, { steamId, name: text(field(player, 'name', 'player_name', 'playerName')) || 'Jogador', team: field(player, 'team', 'team_num', 'teamNumber') == null ? null : text(field(player, 'team', 'team_num', 'teamNumber')) }] })).values()).filter((player) => player.steamId)
   const statMap = new Map<string, { kills: number; deaths: number; assists: number; headshots: number }>(rawPlayers.map((player) => [player.steamId, { kills: 0, deaths: 0, assists: 0, headshots: 0 }]))
+  const aliases = new Map<string, string>()
+  for (const player of info) {
+    const canonical = playerKey(player)
+    if (!canonical) continue
+    for (const key of ['steamid', 'steamId', 'steam_id', 'steamid64', 'steamId64', 'xuid', 'accountid', 'userid', 'user_id', 'entityid', 'entityId']) {
+      const value = text(player[key])
+      if (value) aliases.set(value, canonical)
+    }
+  }
+  const resolvePlayer = (value: unknown) => aliases.get(text(value)) ?? text(value)
   const deaths = rows(parseEvent(buffer, 'player_death', ['name', 'steamid', 'xuid', 'userid', 'attacker', 'assister', 'attacker_steamid', 'assister_steamid', 'headshot'], ['userid', 'attacker', 'assister', 'headshot', 'attacker_steamid', 'assister_steamid']))
   const playerNames = new Map(rawPlayers.map((player) => [player.steamId, player.name]))
   const ensurePlayer = (id: string, name?: unknown) => {
@@ -34,9 +44,9 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
   }
   const seen = new Set<string>()
   for (const [index, event] of deaths.entries()) {
-    const attacker = text(field(event, 'attacker_steamid', 'attackerSteamId', 'attacker_xuid', 'attacker'))
-    const victim = text(field(event, 'steamid', 'steamId', 'xuid', 'victim_steamid', 'userid', 'victim'))
-    const assister = text(field(event, 'assister_steamid', 'assisterSteamId', 'assister_xuid', 'assister'))
+    const attacker = resolvePlayer(field(event, 'attacker_steamid', 'attackerSteamId', 'attacker_xuid', 'attacker'))
+    const victim = resolvePlayer(field(event, 'steamid', 'steamId', 'xuid', 'victim_steamid', 'userid', 'victim'))
+    const assister = resolvePlayer(field(event, 'assister_steamid', 'assisterSteamId', 'assister_xuid', 'assister'))
     const key = `${index}:${attacker}:${victim}:${assister}:${text(field(event, 'headshot', 'is_headshot'))}`
     if (seen.has(key)) continue
     seen.add(key)
