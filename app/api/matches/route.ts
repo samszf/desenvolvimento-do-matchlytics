@@ -18,9 +18,9 @@ const matchSchema = z.object({
   headshots: z.number().int().min(0).max(200),
   adr: z.number().min(0).max(300),
   kast: z.number().min(0).max(100).optional(),
-  ctKills: z.number().int().min(0).max(200), ctDeaths: z.number().int().min(0).max(200), ctAssists: z.number().int().min(0).max(200), ctHeadshots: z.number().int().min(0).max(200), ctAdr: z.number().min(0).max(300),
-  trKills: z.number().int().min(0).max(200), trDeaths: z.number().int().min(0).max(200), trAssists: z.number().int().min(0).max(200), trHeadshots: z.number().int().min(0).max(200), trAdr: z.number().min(0).max(300),
-}).refine((data) => data.headshots <= data.kills, { message: 'Headshots não pode ser maior que Kills.' }).refine((data) => data.ctHeadshots <= data.ctKills && data.trHeadshots <= data.trKills, { message: 'Headshots por lado não pode ser maior que Kills.' }).refine((data) => data.ctKills + data.trKills === data.kills && data.ctDeaths + data.trDeaths === data.deaths && data.ctAssists + data.trAssists === data.assists && data.ctHeadshots + data.trHeadshots === data.headshots || [data.ctKills, data.ctDeaths, data.ctAssists, data.ctHeadshots, data.trKills, data.trDeaths, data.trAssists, data.trHeadshots].every((value) => value === 0), { message: 'As estatísticas CT/TR não conferem com os totais gerais.' })
+  ctKills: z.number().int().min(0).max(200), ctDeaths: z.number().int().min(0).max(200), ctAssists: z.number().int().min(0).max(200), ctHeadshots: z.number().int().min(0).max(200), ctAdr: z.number().min(0).max(300).nullable(),
+  trKills: z.number().int().min(0).max(200), trDeaths: z.number().int().min(0).max(200), trAssists: z.number().int().min(0).max(200), trHeadshots: z.number().int().min(0).max(200), trAdr: z.number().min(0).max(300).nullable(),
+}).refine((data) => data.headshots <= data.kills, { message: 'Headshots não pode ser maior que Kills.' }).refine((data) => data.ctHeadshots <= data.ctKills && data.trHeadshots <= data.trKills, { message: 'Headshots por lado não pode ser maior que Kills.' })
 
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() })
@@ -56,8 +56,8 @@ export async function POST(request: Request) {
   await db.insert(matchStatistics).values({
     id: crypto.randomUUID(), matchId, kills: data.kills, deaths: data.deaths,
     assists: data.assists, headshots: data.headshots, adr: String(data.adr), kast: data.kast == null ? null : String(data.kast),
-    ctKills: data.ctKills, ctDeaths: data.ctDeaths, ctAssists: data.ctAssists, ctHeadshots: data.ctHeadshots, ctAdr: String(data.ctAdr),
-    trKills: data.trKills, trDeaths: data.trDeaths, trAssists: data.trAssists, trHeadshots: data.trHeadshots, trAdr: String(data.trAdr),
+    ctKills: data.ctKills, ctDeaths: data.ctDeaths, ctAssists: data.ctAssists, ctHeadshots: data.ctHeadshots, ctAdr: data.ctAdr == null ? null : String(data.ctAdr),
+    trKills: data.trKills, trDeaths: data.trDeaths, trAssists: data.trAssists, trHeadshots: data.trHeadshots, trAdr: data.trAdr == null ? null : String(data.trAdr),
   })
   return NextResponse.json({ id: matchId }, { status: 201 })
 }

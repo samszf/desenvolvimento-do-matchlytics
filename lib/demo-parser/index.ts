@@ -43,12 +43,13 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
     }
   }
   const resolvePlayer = (value: unknown) => { const candidate = text(value); return aliases.get(candidate) ?? (statMap.has(candidate) ? candidate : '') }
-  const deaths = rows(parseEvent(buffer, 'player_death', ['name', 'player_name', 'steamid', 'xuid', 'user_steamid', 'user_xuid', 'userid', 'attacker', 'assister', 'attacker_steamid', 'attacker_xuid', 'assister_steamid', 'assister_xuid', 'headshot'], ['tick', 'user_steamid', 'user_xuid', 'userid', 'attacker', 'attacker_steamid', 'attacker_xuid', 'assister', 'assister_steamid', 'assister_xuid', 'headshot']))
+  const deaths = rows(parseEvent(buffer, 'player_death', ['name', 'player_name', 'steamid', 'xuid', 'user_steamid', 'user_xuid', 'userid', 'attacker', 'assister', 'attacker_steamid', 'attacker_xuid', 'attacker_team_name', 'assister_steamid', 'assister_xuid', 'assister_team_name', 'user_team_name', 'headshot'], ['tick', 'user_steamid', 'user_xuid', 'userid', 'attacker', 'attacker_steamid', 'attacker_xuid', 'assister', 'assister_steamid', 'assister_xuid', 'headshot']))
   const ticks = deaths.map((event) => Number(field(event, 'tick'))).filter(Number.isFinite)
   const tickRows = rows(parseTicks(buffer, ['steamid', 'team_num'], ticks))
   const sideAtTick = new Map<string, 'CT' | 'TR'>()
   for (const row of tickRows) { const tick = Number(field(row, 'tick')); const steamId = resolvePlayer(field(row, 'steamid', 'steamId', 'xuid')); const side = sideFromTeamNum(field(row, 'team_num', 'teamNum')); if (Number.isFinite(tick) && steamId && side) sideAtTick.set(`${tick}:${steamId}`, side) }
-  const sideFor = (event: Record<string, unknown>, steamId: string) => { const tick = Number(field(event, 'tick')); if (!Number.isFinite(tick) || !steamId) return null; return sideAtTick.get(`${tick}:${steamId}`) ?? null }
+  const sideFromTeamName = (value: unknown): 'CT' | 'TR' | null => { const team = text(value).toUpperCase(); if (team.includes('CT') || team.includes('COUNTER')) return 'CT'; if (team === 'T' || team.includes('TERRORIST')) return 'TR'; return null }
+  const sideFor = (event: Record<string, unknown>, steamId: string, role: 'attacker' | 'victim' | 'assister') => { const direct = sideFromTeamName(role === 'attacker' ? field(event, 'attacker_team_name') : role === 'victim' ? field(event, 'user_team_name', 'victim_team_name') : field(event, 'assister_team_name')); if (direct) return direct; const tick = Number(field(event, 'tick')); if (!Number.isFinite(tick) || !steamId) return null; return sideAtTick.get(`${tick}:${steamId}`) ?? null }
   const playerNames = new Map(rawPlayers.map((player) => [player.steamId, player.name]))
   const sideMap = new Map<string, { ct: SideRaw; tr: SideRaw }>()
   const createSideRaw = (): SideRaw => ({ kills: 0, deaths: 0, assists: 0, headshots: 0, damage: 0, rounds: 0 })
@@ -75,9 +76,9 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
     ensurePlayer(attacker, field(event, 'attacker_name', 'attackerName'))
     ensurePlayer(victim, field(event, 'name', 'player_name', 'victim_name', 'victimName'))
     ensurePlayer(assister, field(event, 'assister_name', 'assisterName'))
-    if (statMap.has(attacker)) { const stat = statMap.get(attacker)!; stat.kills += 1; const side = sideStat(attacker, sideFor(event, attacker)); if (side) { side.kills += 1; if (isHeadshot(field(event, 'headshot', 'is_headshot'))) side.headshots += 1 } }
-    if (statMap.has(victim)) { statMap.get(victim)!.deaths += 1; const side = sideStat(victim, sideFor(event, victim)); if (side) side.deaths += 1 }
-    if (statMap.has(assister)) { statMap.get(assister)!.assists += 1; const side = sideStat(assister, sideFor(event, assister)); if (side) side.assists += 1 }
+    if (statMap.has(attacker)) { const stat = statMap.get(attacker)!; stat.kills += 1; const side = sideStat(attacker, sideFor(event, attacker, 'attacker')); if (side) { side.kills += 1; if (isHeadshot(field(event, 'headshot', 'is_headshot'))) side.headshots += 1 } }
+    if (statMap.has(victim)) { statMap.get(victim)!.deaths += 1; const side = sideStat(victim, sideFor(event, victim, 'victim')); if (side) side.deaths += 1 }
+    if (statMap.has(assister)) { statMap.get(assister)!.assists += 1; const side = sideStat(assister, sideFor(event, assister, 'assister')); if (side) side.assists += 1 }
   }
   const players = [...statMap.entries()].map(([steamId, raw]) => ({ steamId, name: playerNames.get(steamId) || 'Jogador', team: rawPlayers.find((player) => player.steamId === steamId)?.team ?? null, stats: metrics(raw, sideMap.get(steamId)) }))
   if (!players.length) warnings.push('Não foi possível identificar jogadores nesta demo.')
