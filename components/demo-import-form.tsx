@@ -16,7 +16,8 @@ function StatGrid({ stats }: { stats: ImportedStats }) {
     ['Kills', format(stats.kills)], ['Deaths', format(stats.deaths)], ['Assists', format(stats.assists)],
     ['Headshots', format(stats.headshots)], ['K/D', format(stats.kd, 2)], ['HS%', stats.hsPercentage == null ? 'Indisponível' : `${stats.hsPercentage.toFixed(1)}%`],
   ]
-  return <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{values.map(([label, value]) => <div key={label} className="rounded-xl border border-white/8 bg-[#0c1118] p-4"><p className="text-xs text-[#8995a5]">{label}</p><p className="mt-1 text-xl font-semibold text-white">{value}</p></div>)}</div>
+  const sideCards = (label: string, side: ImportedStats['ct']) => <div className="rounded-xl border border-white/8 bg-[#0c1118] p-4"><p className="mb-3 text-sm font-semibold text-white">{label}</p><div className="grid grid-cols-2 gap-3 text-sm"><span>Kills <b>{side.kills}</b></span><span>Deaths <b>{side.deaths}</b></span><span>Assists <b>{side.assists}</b></span><span>Headshots <b>{side.headshots}</b></span><span>K/D <b>{side.kd.toFixed(2)}</b></span><span>HS% <b>{side.hsPercentage.toFixed(1)}%</b></span></div></div>
+  return <div className="space-y-3"><div className="grid grid-cols-2 gap-3 sm:grid-cols-3">{values.map(([label, value]) => <div key={label} className="rounded-xl border border-white/8 bg-[#0c1118] p-4"><p className="text-xs text-[#8995a5]">{label}</p><p className="mt-1 text-xl font-semibold text-white">{value}</p></div>)}</div><div className="grid gap-3 sm:grid-cols-2">{sideCards('CT', stats.ct)}{sideCards('TR', stats.tr)}</div></div>
 }
 
 function PlayerRow({ item, selected, onSelect }: { item: ImportedPlayer; selected: boolean; onSelect: () => void }) {
@@ -59,7 +60,7 @@ export function DemoImportForm() {
   async function confirm() {
     if (!data || !selectedPlayer || !selectedStats) return
     if ([selectedStats.kills, selectedStats.deaths, selectedStats.assists, selectedStats.headshots].some((value) => value == null)) { setError('Revise os dados: a demo não forneceu estatísticas suficientes.'); return }
-    const response = await fetch('/api/matches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ map: data.map ?? 'Desconhecido', playedAt: data.playedAt ?? new Date().toISOString(), result, playerScore: Number(playerScore), opponentScore: Number(opponentScore), kills: selectedStats.kills, deaths: selectedStats.deaths, assists: selectedStats.assists, headshots: selectedStats.headshots, adr: Number(adr), kast: kast ? Number(kast) : undefined, ctKills: 0, ctDeaths: 0, ctAssists: 0, ctHeadshots: 0, ctAdr: 0, trKills: 0, trDeaths: 0, trAssists: 0, trHeadshots: 0, trAdr: 0 }) })
+    const response = await fetch('/api/matches', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ map: data.map ?? 'Desconhecido', playedAt: data.playedAt ?? new Date().toISOString(), result, playerScore: Number(playerScore), opponentScore: Number(opponentScore), kills: selectedStats.kills, deaths: selectedStats.deaths, assists: selectedStats.assists, headshots: selectedStats.headshots, adr: Number(adr), kast: kast ? Number(kast) : undefined, ctKills: selectedStats.ct.kills, ctDeaths: selectedStats.ct.deaths, ctAssists: selectedStats.ct.assists, ctHeadshots: selectedStats.ct.headshots, ctAdr: selectedStats.ct.adr ?? 0, trKills: selectedStats.tr.kills, trDeaths: selectedStats.tr.deaths, trAssists: selectedStats.tr.assists, trHeadshots: selectedStats.tr.headshots, trAdr: selectedStats.tr.adr ?? 0 }) })
     if (!response.ok) { setError((await response.json()).error ?? 'Não foi possível importar a partida.'); return }
     window.location.href = '/matches'
   }

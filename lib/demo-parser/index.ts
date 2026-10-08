@@ -1,4 +1,5 @@
-export type ImportedStats = { kills: number | null; deaths: number | null; assists: number | null; headshots: number | null; kd: number | null; hsPercentage: number | null; adr: number | null; kast: number | null }
+export type ImportedSideStats = { kills: number; deaths: number; assists: number; headshots: number; adr: number | null; kd: number; hsPercentage: number }
+export type ImportedStats = { kills: number | null; deaths: number | null; assists: number | null; headshots: number | null; kd: number | null; hsPercentage: number | null; adr: number | null; kast: number | null; ct: ImportedSideStats; tr: ImportedSideStats }
 export type ImportedPlayer = { steamId: string; name: string; team: string | null; stats: ImportedStats }
 export type ImportedMatch = { map: string | null; playedAt: string | null; players: ImportedPlayer[]; stats: ImportedStats; source: 'demo'; warnings: string[] }
 
@@ -16,10 +17,13 @@ function text(value: unknown) { return value == null ? '' : String(value) }
 function field(row: Record<string, unknown>, ...keys: string[]) { for (const key of keys) if (row[key] != null) return row[key]; return null }
 function playerKey(row: Record<string, unknown>) { return text(field(row, 'steamid', 'steamId', 'steam_id', 'steamid64', 'steamId64', 'xuid', 'xuid64')) }
 function isHeadshot(value: unknown) { return value === true || value === 1 || value === '1' || value === 'true' || value === 'TRUE' }
-function metrics(raw: { kills: number; deaths: number; assists: number; headshots: number }): ImportedStats { return { ...raw, kd: raw.deaths > 0 ? raw.kills / raw.deaths : raw.kills, hsPercentage: raw.kills > 0 ? raw.headshots / raw.kills * 100 : 0, adr: null, kast: null } }
+type SideRaw = { kills: number; deaths: number; assists: number; headshots: number; damage: number; rounds: number }
+function sideMetrics(raw: SideRaw): ImportedSideStats { return { kills: raw.kills, deaths: raw.deaths, assists: raw.assists, headshots: raw.headshots, adr: raw.rounds > 0 ? raw.damage / raw.rounds : null, kd: raw.deaths > 0 ? raw.kills / raw.deaths : raw.kills, hsPercentage: raw.kills > 0 ? raw.headshots / raw.kills * 100 : 0 } }
+function metrics(raw: { kills: number; deaths: number; assists: number; headshots: number }, sides?: { ct: SideRaw; tr: SideRaw }): ImportedStats { const ct = sides?.ct ?? { kills: 0, deaths: 0, assists: 0, headshots: 0, damage: 0, rounds: 0 }; const tr = sides?.tr ?? { kills: 0, deaths: 0, assists: 0, headshots: 0, damage: 0, rounds: 0 }; return { ...raw, kd: raw.deaths > 0 ? raw.kills / raw.deaths : raw.kills, hsPercentage: raw.kills > 0 ? raw.headshots / raw.kills * 100 : 0, adr: null, kast: null, ct: sideMetrics(ct), tr: sideMetrics(tr) } }
 
 export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
-  const { parseEvent, parseHeader, parsePlayerInfo } = await import('@laihoe/demoparser2')
+  const { parseEvent, parseHeader, parsePlayerInfo, parseTicks } = await import('@laihoe/demoparser2')
+  const sideFromTeamNum = (teamNum: unknown): 'CT' | 'TR' | null => { const value = Number(teamNum); return value === 3 ? 'CT' : value === 2 ? 'TR' : null }
   const warnings: string[] = []
   const header = parseHeader(buffer) as Record<string, unknown>
   const info = rows(parsePlayerInfo(buffer))
@@ -39,8 +43,18 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
     }
   }
   const resolvePlayer = (value: unknown) => { const candidate = text(value); return aliases.get(candidate) ?? (statMap.has(candidate) ? candidate : '') }
-  const deaths = rows(parseEvent(buffer, 'player_death', ['name', 'player_name', 'steamid', 'xuid', 'user_steamid', 'user_xuid', 'userid', 'attacker', 'assister', 'attacker_steamid', 'attacker_xuid', 'assister_steamid', 'assister_xuid', 'headshot'], ['user_steamid', 'user_xuid', 'userid', 'attacker', 'attacker_steamid', 'attacker_xuid', 'assister', 'assister_steamid', 'assister_xuid', 'headshot']))
+  const deaths = rows(parseEvent(buffer, 'player_death', ['name', 'player_name', 'steamid', 'xuid', 'user_steamid', 'user_xuid', 'userid', 'attacker', 'assister', 'attacker_steamid', 'attacker_xuid', 'assister_steamid', 'assister_xuid', 'headshot'], ['tick', 'user_steamid', 'user_xuid', 'userid', 'attacker', 'attacker_steamid', 'attacker_xuid', 'assister', 'assister_steamid', 'assister_xuid', 'headshot']))
+  const ticks = deaths.map((event) => Number(field(event, 'tick'))).filter(Number.isFinite)
+  const tickRows = rows(parseTicks(buffer, ['steamid', 'team_num'], ticks))
+  const sideAtTick = new Map<string, 'CT' | 'TR'>()
+  for (const row of tickRows) { const tick = Number(field(row, 'tick')); const steamId = resolvePlayer(field(row, 'steamid', 'steamId', 'xuid')); const side = sideFromTeamNum(field(row, 'team_num', 'teamNum')); if (Number.isFinite(tick) && steamId && side) sideAtTick.set(`${tick}:${steamId}`, side) }
+  const sideFor = (event: Record<string, unknown>, steamId: string) => { const tick = Number(field(event, 'tick')); if (!Number.isFinite(tick) || !steamId) return null; return sideAtTick.get(`${tick}:${steamId}`) ?? null }
   const playerNames = new Map(rawPlayers.map((player) => [player.steamId, player.name]))
+  const sideMap = new Map<string, { ct: SideRaw; tr: SideRaw }>()
+  const createSideRaw = (): SideRaw => ({ kills: 0, deaths: 0, assists: 0, headshots: 0, damage: 0, rounds: 0 })
+  for (const player of rawPlayers) sideMap.set(player.steamId, { ct: createSideRaw(), tr: createSideRaw() })
+  const unresolvedSides = new Set<string>()
+  const sideStat = (id: string, side: 'CT' | 'TR' | null) => { if (!id || !side) { if (id) unresolvedSides.add(id); return null }; const entry = sideMap.get(id) ?? { ct: createSideRaw(), tr: createSideRaw() }; sideMap.set(id, entry); return entry[side.toLowerCase() as 'ct' | 'tr'] }
   const ensurePlayer = (id: string, name?: unknown) => {
     if (!id) return
     if (!statMap.has(id)) statMap.set(id, { kills: 0, deaths: 0, assists: 0, headshots: 0 })
@@ -61,14 +75,18 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
     ensurePlayer(attacker, field(event, 'attacker_name', 'attackerName'))
     ensurePlayer(victim, field(event, 'name', 'player_name', 'victim_name', 'victimName'))
     ensurePlayer(assister, field(event, 'assister_name', 'assisterName'))
-    if (statMap.has(attacker)) { const stat = statMap.get(attacker)!; stat.kills += 1; if (isHeadshot(field(event, 'headshot', 'is_headshot'))) stat.headshots += 1 }
-    if (statMap.has(victim)) statMap.get(victim)!.deaths += 1
-    if (statMap.has(assister)) statMap.get(assister)!.assists += 1
+    if (statMap.has(attacker)) { const stat = statMap.get(attacker)!; stat.kills += 1; const side = sideStat(attacker, sideFor(event, attacker)); if (side) { side.kills += 1; if (isHeadshot(field(event, 'headshot', 'is_headshot'))) side.headshots += 1 } }
+    if (statMap.has(victim)) { statMap.get(victim)!.deaths += 1; const side = sideStat(victim, sideFor(event, victim)); if (side) side.deaths += 1 }
+    if (statMap.has(assister)) { statMap.get(assister)!.assists += 1; const side = sideStat(assister, sideFor(event, assister)); if (side) side.assists += 1 }
   }
-  const players = [...statMap.entries()].map(([steamId, raw]) => ({ steamId, name: playerNames.get(steamId) || 'Jogador', team: rawPlayers.find((player) => player.steamId === steamId)?.team ?? null, stats: metrics(raw) }))
+  const players = [...statMap.entries()].map(([steamId, raw]) => ({ steamId, name: playerNames.get(steamId) || 'Jogador', team: rawPlayers.find((player) => player.steamId === steamId)?.team ?? null, stats: metrics(raw, sideMap.get(steamId)) }))
   if (!players.length) warnings.push('Não foi possível identificar jogadores nesta demo.')
   if (!deaths.length) warnings.push('A demo não expôs eventos de eliminação suficientes para calcular estatísticas automaticamente.')
-  warnings.push(`player_death: ${deaths.length} eventos, ${resolvedVictims} vítimas resolvidas, ${unresolvedVictims} não resolvidas, ${[...statMap.values()].reduce((sum, stat) => sum + stat.deaths, 0)} deaths contabilizadas.`)
+  const totals = [...sideMap.values()].reduce((sum, sides) => ({ kills: sum.kills + sides.ct.kills + sides.tr.kills, deaths: sum.deaths + sides.ct.deaths + sides.tr.deaths, assists: sum.assists + sides.ct.assists + sides.tr.assists, headshots: sum.headshots + sides.ct.headshots + sides.tr.headshots }), { kills: 0, deaths: 0, assists: 0, headshots: 0 })
+  const general = [...statMap.values()].reduce((sum, stat) => ({ kills: sum.kills + stat.kills, deaths: sum.deaths + stat.deaths, assists: sum.assists + stat.assists, headshots: sum.headshots + stat.headshots }), { kills: 0, deaths: 0, assists: 0, headshots: 0 })
+  if (general.kills !== totals.kills || general.deaths !== totals.deaths || general.assists !== totals.assists || general.headshots !== totals.headshots) warnings.push(`Não foi possível classificar todos os eventos por lado: geral K/D/A/HS ${general.kills}/${general.deaths}/${general.assists}/${general.headshots}; lados ${totals.kills}/${totals.deaths}/${totals.assists}/${totals.headshots}.`)
+  if (process.env.NODE_ENV !== 'production') console.log('[demo-parser] jogadores:', statMap.size, 'player_death:', deaths.length, 'vítimas resolvidas:', resolvedVictims, 'eventos sem side resolvido:', unresolvedSides.size, 'CT:', [...sideMap.values()].reduce((sum, sides) => sum + sides.ct.kills, 0), 'TR:', [...sideMap.values()].reduce((sum, sides) => sum + sides.tr.kills, 0))
+  warnings.push(`player_death: ${deaths.length} eventos, ${resolvedVictims} vítimas resolvidas, ${unresolvedVictims} não resolvidas, ${general.deaths} deaths contabilizadas.`)
   const empty = metrics({ kills: 0, deaths: 0, assists: 0, headshots: 0 })
   const selected = players.reduce((best, player) => (player.stats.kills ?? 0) > (best?.stats.kills ?? -1) ? player : best, players[0])
   return { map: typeof header.map_name === 'string' ? header.map_name : typeof header.map === 'string' ? header.map : null, playedAt: null, players, stats: selected?.stats ?? empty, source: 'demo', warnings }
