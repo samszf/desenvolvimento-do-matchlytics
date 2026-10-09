@@ -30,7 +30,10 @@ export function KDChart({ data }: { data: KDPoint[] }) {
   }
 
   return (
-    <ChartContainer config={chartConfig} className="h-52 w-full">
+    <section aria-labelledby="kd-chart-title" aria-describedby="kd-chart-description" className="w-full">
+      <h3 id="kd-chart-title" className="sr-only">Evolução do K/D</h3>
+      <p id="kd-chart-description" className="sr-only">Valores de K/D por partida: {data.map((point) => `${point.label}: ${point.kd.toFixed(2)}`).join(', ')}.</p>
+      <ChartContainer config={chartConfig} className="h-52 w-full" role="img" aria-label="Gráfico de evolução do K/D">
       <LineChart data={data} margin={{ top: 10, right: 12, left: -18, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.08)" />
         <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} stroke="#687588" />
@@ -38,7 +41,8 @@ export function KDChart({ data }: { data: KDPoint[] }) {
         <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
         <Line dataKey="kd" type="monotone" stroke="var(--color-kd)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--color-kd)" }} activeDot={{ r: 5 }} />
       </LineChart>
-    </ChartContainer>
+      </ChartContainer>
+    </section>
   )
 }
 
