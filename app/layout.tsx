@@ -41,6 +41,7 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <body className="antialiased">
+        <a className="skip-link" href="#main-content">Pular para o conteúdo principal</a>
         {children}
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

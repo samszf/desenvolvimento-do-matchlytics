@@ -32,7 +32,7 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <main className="min-h-screen bg-[#080b10] text-[#f5f7fa]">
+    <main id="main-content" className="min-h-screen bg-[#080b10] text-[#f5f7fa]">
       <Navigation userName={session.user.name} />
 
       <section className="mx-auto max-w-7xl px-5 pb-16 pt-10 lg:px-8">

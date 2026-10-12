@@ -18,6 +18,7 @@ export function Navigation({ userName }: { userName?: string }) {
 
   return (
     <header className="border-b border-white/8 bg-[#080b10]/95 backdrop-blur">
+      <span className="sr-only">Navegação da conta</span>
       <div className="mx-auto flex max-w-7xl items-center gap-6 px-5 py-4 lg:px-8">
         <Link href="/dashboard" className="flex shrink-0 items-center gap-3" aria-label="Matchlytics dashboard">
           <span className="flex size-9 items-center justify-center rounded-xl bg-[#1d6cff] shadow-[0_0_28px_rgba(29,108,255,0.35)]"><Target className="size-5" /></span>

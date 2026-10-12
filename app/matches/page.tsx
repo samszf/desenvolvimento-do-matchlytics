@@ -27,7 +27,7 @@ export default async function MatchesPage() {
     .orderBy(desc(matches.playedAt))
 
   return (
-    <main className="min-h-screen bg-[#080b10] text-[#f5f7fa]">
+    <main id="main-content" className="min-h-screen bg-[#080b10] text-[#f5f7fa]">
       <Navigation />
 
       <section className="mx-auto max-w-7xl px-5 pb-16 pt-8 lg:px-8">
