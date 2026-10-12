@@ -1,28 +1,35 @@
-# Auditoria de acessibilidade
+# Acessibilidade
 
-## Escopo
+## Estrutura
 
-Foram revisados os padrões globais de foco, o salto para o conteúdo principal, navegação, menu móvel da página inicial, importação de demos, seleção de jogador, gráfico de K/D e landmarks das telas principais.
+O layout global fornece o link “Pular para o conteúdo principal”, visualmente oculto até receber foco, com destino `#main-content`. As páginas renderizadas possuem um único landmark `<main id="main-content" tabIndex={-1}>`; a navegação global permanece fora do conteúdo principal. Formulários reutilizáveis não criam landmarks próprios.
 
-## Correções aplicadas
+## Rotas auditadas
 
-- Adicionado `lang="pt-BR"` no documento e link "Pular para o conteúdo principal".
-- Criado foco visível consistente com `:focus-visible`, contorno e anel de alto contraste.
-- Adicionados `id="main-content"` às telas principais revisadas.
-- Menu móvel passou a expor `aria-expanded`, `aria-controls` e fechamento por Escape.
-- Controles que não alternam painéis deixaram de usar semântica de abas incorreta e usam `aria-pressed`.
-- Gráfico de K/D recebeu título, descrição textual com valores reais e nome acessível.
-- Importação passou a comunicar carregamento, aplicar `aria-busy`, nomear o campo de arquivo e expor erros como alerta.
-- A seleção de jogador recebeu `required` e `aria-invalid`.
+- `/`
+- `/sign-in`
+- `/sign-up`
+- `/dashboard`
+- `/matches`
+- `/matches/new`
+- `/matches/import`
+- `/matches/[id]`
+- `/analysis`
+- `/maps`
+- `/insights`
+- página 404
 
-## Verificação executada
+## Correções realizadas
 
-- `pnpm typecheck`
-- `pnpm build`
-- Verificação manual no preview da tela de importação e navegação visual.
+- Adicionado foco visível consistente para controles interativos.
+- Adicionado skip link com contraste e foco persistente.
+- Adicionado `main-content` às páginas públicas, autenticadas e 404.
+- Navegação global removida de dentro do landmark principal nas páginas que a renderizavam internamente.
+- Menu mobile recebeu nome, estado expandido e fechamento por Escape.
+- Gráfico de K/D recebeu descrição textual para leitores de tela.
 
-## Limitações
+## Verificações
 
-Não foi executada uma auditoria completa com axe-core nem uma revisão manual de todas as combinações de contraste, leitor de tela, zoom e todas as rotas autenticadas nesta etapa. Portanto, este documento não declara conformidade completa com WCAG 2.2 AA. Ainda é recomendável executar testes com axe-core/Playwright e validar os fluxos autenticados com teclado e leitor de tela.
+Executados `pnpm typecheck`, `pnpm test` e `pnpm build` após as alterações. Também foi feita auditoria estática dos landmarks e destinos. Não há Playwright nem axe-core configurados no projeto; portanto, a ativação do skip link e a navegação por teclado em navegador ainda devem ser validadas manualmente.
 
-Os cálculos, parser, banco, autenticação e regras de negócio não foram alterados.
+Esta documentação não declara conformidade completa com WCAG 2.2 AA.

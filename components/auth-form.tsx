@@ -36,7 +36,7 @@ export function AuthForm({ mode }: AuthFormProps) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#080b10] px-5 py-10 text-[#f5f7fa]">
+    <main id="main-content" tabIndex={-1} className="flex min-h-screen items-center justify-center bg-[#080b10] px-5 py-10 text-[#f5f7fa]">
       <div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#111720] p-7 shadow-[0_30px_90px_rgba(0,0,0,0.38)] sm:p-9">
         <a href="/" className="mx-auto flex w-fit items-center gap-3" aria-label="Matchlytics início">
           <span className="flex size-9 items-center justify-center rounded-xl bg-[#1d6cff] shadow-[0_0_28px_rgba(29,108,255,0.35)]"><Target className="size-5" /></span>

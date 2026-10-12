@@ -27,8 +27,8 @@ export default async function MatchesPage() {
     .orderBy(desc(matches.playedAt))
 
   return (
-    <main id="main-content" className="min-h-screen bg-[#080b10] text-[#f5f7fa]">
-      <Navigation />
+    <><Navigation />
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-[#080b10] text-[#f5f7fa]">
 
       <section className="mx-auto max-w-7xl px-5 pb-16 pt-8 lg:px-8">
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
@@ -45,5 +45,6 @@ export default async function MatchesPage() {
         </div>
       </section>
     </main>
+    </>
   )
 }

@@ -32,8 +32,8 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <main id="main-content" className="min-h-screen bg-[#080b10] text-[#f5f7fa]">
-      <Navigation userName={session.user.name} />
+    <><Navigation userName={session.user.name} />
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-[#080b10] text-[#f5f7fa]">
 
       <section className="mx-auto max-w-7xl px-5 pb-16 pt-10 lg:px-8">
         <div className="rounded-3xl border border-[#255bbd]/30 bg-[linear-gradient(120deg,#10234a,#0f1724_60%,#111720)] p-7 sm:p-10">
@@ -70,5 +70,6 @@ export default async function DashboardPage() {
         </div>
       </section>
     </main>
+    </>
   )
 }

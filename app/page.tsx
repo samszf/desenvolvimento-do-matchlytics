@@ -41,7 +41,7 @@ export default function Page() {
   }, [menuOpen])
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#080b10] text-[#f5f7fa]">
+    <main id="main-content" tabIndex={-1} className="min-h-screen overflow-hidden bg-[#080b10] text-[#f5f7fa]">
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_75%_0%,rgba(44,112,255,0.12),transparent_32%),radial-gradient(circle_at_10%_30%,rgba(29,191,115,0.05),transparent_28%)]" />
       <header className="relative z-20 mx-auto flex max-w-7xl items-center justify-between px-5 py-6 lg:px-8">
         <a href="#top" className="flex items-center gap-3" aria-label="Matchlytics início">
