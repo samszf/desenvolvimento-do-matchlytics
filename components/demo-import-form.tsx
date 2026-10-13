@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import { useSession } from '@/lib/auth-client'
 import { upload } from '@vercel/blob/client'
 import { CheckCircle2, FileUp, Loader2, UploadCloud } from 'lucide-react'
 import type { ImportedMatch, ImportedPlayer, ImportedStats } from '@/lib/demo-parser'
@@ -25,6 +26,7 @@ function PlayerRow({ item, selected, onSelect }: { item: ImportedPlayer; selecte
 }
 
 export function DemoImportForm() {
+  const { data: session } = useSession()
   const inputRef = useRef<HTMLInputElement>(null)
   const [file, setFile] = useState<File | null>(null)
   const [data, setData] = useState<ImportedMatch | null>(null)
@@ -42,7 +44,8 @@ export function DemoImportForm() {
     if (!file) return
     setLoading(true); setError('')
     try {
-      const blob = await upload(`demos/${file.name}`, file, { access: 'private', contentType: 'application/octet-stream', handleUploadUrl: '/api/matches/import/upload' })
+      if (!session?.user.id) throw new Error('Não autenticado')
+      const blob = await upload(`demos/${session.user.id}/${file.name}`, file, { access: 'private', contentType: 'application/octet-stream', handleUploadUrl: '/api/matches/import/upload' })
       const response = await fetch('/api/matches/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pathname: blob.pathname }) })
       const payload = await response.json().catch(() => null)
       if (!response.ok || !payload) throw new Error(payload?.error ?? `Falha ao analisar demo (${response.status})`)

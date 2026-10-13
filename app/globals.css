@@ -175,6 +175,9 @@
 
   .skip-link:focus { transform: translateY(0); }
 
+  .border-white\/8 { border-color: #5d6d82 !important; }
+  .border-white\/10 { border-color: #5d6d82 !important; }
+
   * {
     @apply border-border outline-ring/50;
   }

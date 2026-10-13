@@ -32,8 +32,8 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <main id="main-content" className="min-h-screen bg-[#080b10] text-[#f5f7fa]">
-      <Navigation userName={session.user.name} />
+    <><Navigation userName={session.user.name} />
+      <main id="main-content" tabIndex={-1} className="min-h-screen bg-[#080b10] text-[#f5f7fa]">
 
       <section className="mx-auto max-w-7xl px-5 pb-16 pt-10 lg:px-8">
         <div className="rounded-3xl border border-[#255bbd]/30 bg-[linear-gradient(120deg,#10234a,#0f1724_60%,#111720)] p-7 sm:p-10">
@@ -64,11 +64,12 @@ export default async function DashboardPage() {
           </div>
           <div className="rounded-2xl border border-white/8 bg-[#111720] p-6">
             <p className="text-xs font-medium text-[#c9d0dc]">Partidas recentes</p>
-            {items.length ? <div className="mt-5 flex flex-col gap-3">{items.slice(0, 3).map((item) => <a href={`/matches/${item.id}`} key={item.id} className="flex items-center justify-between rounded-lg border border-white/6 px-3 py-2.5 text-sm transition hover:bg-white/[0.03]"><span><span className="font-medium">{mapNames[item.mapId] ?? item.mapId}</span><span className="ml-2 text-xs text-[#687588]">{item.playerScore}:{item.opponentScore}</span></span><span className={item.result === 'win' ? 'text-[#68d391]' : item.result === 'loss' ? 'text-[#ff8f8f]' : 'text-[#f2c66d]'}>{item.result === 'win' ? 'Vitória' : item.result === 'loss' ? 'Derrota' : 'Empate'}</span></a>)}</div> : <p className="mt-2 text-sm leading-6 text-[#738094]">Nenhuma partida registrada ainda.</p>}
+            {items.length ? <div className="mt-5 flex flex-col gap-3">{items.slice(0, 3).map((item) => <a href={`/matches/${item.id}`} key={item.id} className="flex items-center justify-between rounded-lg border border-white/6 px-3 py-2.5 text-sm transition hover:bg-white/[0.03]"><span><span className="font-medium">{mapNames[item.mapId] ?? item.mapId}</span><span className="ml-2 text-xs text-[#94a0b1]">{item.playerScore}:{item.opponentScore}</span></span><span className={item.result === 'win' ? 'text-[#68d391]' : item.result === 'loss' ? 'text-[#ff8f8f]' : 'text-[#f2c66d]'}>{item.result === 'win' ? 'Vitória' : item.result === 'loss' ? 'Derrota' : 'Empate'}</span></a>)}</div> : <p className="mt-2 text-sm leading-6 text-[#738094]">Nenhuma partida registrada ainda.</p>}
             <a href={items.length ? '/matches' : '/matches/new'} className="mt-6 inline-block text-sm font-semibold text-[#7fb0ff] transition hover:text-white">{items.length ? 'Ver histórico completo' : 'Adicionar primeira partida'} <ArrowRight className="ml-1 inline size-4" /></a>
           </div>
         </div>
       </section>
     </main>
+    </>
   )
 }

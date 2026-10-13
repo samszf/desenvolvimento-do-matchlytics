@@ -23,7 +23,7 @@ const chartConfig = {
 export function KDChart({ data }: { data: KDPoint[] }) {
   if (!data.length) {
     return (
-      <div className="flex h-52 items-center justify-center rounded-xl border border-white/8 bg-[#0c1118] text-sm text-[#687588]">
+      <div className="flex h-52 items-center justify-center rounded-xl border border-white/8 bg-[#0c1118] text-sm text-[#94a0b1]">
         Aguardando seus dados
       </div>
     )
@@ -36,8 +36,8 @@ export function KDChart({ data }: { data: KDPoint[] }) {
       <ChartContainer config={chartConfig} className="h-52 w-full" role="img" aria-label="Gráfico de evolução do K/D">
       <LineChart data={data} margin={{ top: 10, right: 12, left: -18, bottom: 0 }}>
         <CartesianGrid vertical={false} stroke="rgba(255,255,255,0.08)" />
-        <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} stroke="#687588" />
-        <YAxis tickLine={false} axisLine={false} tickMargin={8} width={34} domain={[0, "auto"]} stroke="#687588" />
+        <XAxis dataKey="label" tickLine={false} axisLine={false} tickMargin={8} stroke="#94a0b1" />
+        <YAxis tickLine={false} axisLine={false} tickMargin={8} width={34} domain={[0, "auto"]} stroke="#94a0b1" />
         <ChartTooltip cursor={false} content={<ChartTooltipContent indicator="line" />} />
         <Line dataKey="kd" type="monotone" stroke="var(--color-kd)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--color-kd)" }} activeDot={{ r: 5 }} />
       </LineChart>

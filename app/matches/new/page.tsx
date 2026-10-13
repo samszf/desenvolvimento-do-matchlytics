@@ -6,5 +6,5 @@ import { MatchForm } from '@/components/match-form'
 export default async function NewMatchPage() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) redirect('/sign-in')
-  return <MatchForm />
+  return <main id="main-content" tabIndex={-1}><MatchForm /></main>
 }
