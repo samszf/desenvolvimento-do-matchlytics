@@ -49,4 +49,12 @@ As relações abaixo foram calculadas pela fórmula de luminância relativa sRGB
 
 A cor `#586476` sobre `#111923` foi medida em 2,95:1 e não é usada como texto após a auditoria; `#738094` sobre o mesmo fundo mede 4,42:1, abaixo de 4,5:1 para texto comum, e também não foi mantida como texto. A correção foi aplicada na origem visual em `globals.css` para as classes compartilhadas `border-white/8` e `border-white/10`, e nos textos de eixo/metadados que usavam `#687588`.
 
-O gráfico de K/D mantém a linha e os valores, além da descrição textual existente para leitores de tela. A distinção de estados não depende apenas de cor: seleção, erro e foco também possuem estado visual/semântico ou mensagem textual. Esta auditoria cobre as combinações identificadas no tema escuro; não declara conformidade completa com WCAG 2.2 AA nem substitui testes manuais com usuários e ferramentas especializadas.
+O gráfico de K/D mantém a linha e os valores, além da descrição textual existente para leitores de tela. ## Lista de jogadores na importação
+
+No desktop, a apresentação mantém a organização em colunas para Jogador, Time, Kills, Deaths, Assists, Headshots, K/D e HS%. Em telas menores, cada jogador mantém a mesma linha de seleção, mas exibe um card de largura total com todas as oito informações visíveis: Nome, Time, Kills, Deaths, Assists, Headshots, K/D e HS%. Nenhuma métrica é ocultada por responsividade e não há uma segunda tabela duplicada na árvore de acessibilidade.
+
+Cada jogador é um botão com `role="radio"`, `aria-checked`, nome acessível contendo as estatísticas e foco visível. O grupo anuncia a quantidade de jogadores encontrados; o jogador ativo recebe a indicação textual “Jogador selecionado”. A seleção continua usando o estado existente `player`, portanto o preview e `selectedPlayer` continuam atualizando imediatamente.
+
+Foram considerados os breakpoints de 320px, 375px, 390px, 768px, 1024px e desktop. A validação automatizada deve incluir `pnpm typecheck`, `pnpm test` e `pnpm build`; testes com demo real, teclado e leitor de tela dependem do ambiente e devem ser confirmados manualmente antes de declarar conformidade completa.
+
+A distinção de estados não depende apenas de cor: seleção, erro e foco também possuem estado visual/semântico ou mensagem textual. Esta auditoria cobre as combinações identificadas no tema escuro; não declara conformidade completa com WCAG 2.2 AA nem substitui testes manuais com usuários e ferramentas especializadas.
