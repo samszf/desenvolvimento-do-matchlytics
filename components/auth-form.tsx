@@ -28,7 +28,14 @@ export function AuthForm({ mode }: AuthFormProps) {
 
     setPending(false)
     if (result.error) {
-      setError('Não foi possível concluir. Verifique os dados e tente novamente.')
+      const errorCode = result.error.code
+      if (isSignUp && errorCode === 'USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL') {
+        setError('Este e-mail já está cadastrado. Entre na sua conta ou use outro e-mail.')
+      } else if (!isSignUp && errorCode === 'INVALID_EMAIL_OR_PASSWORD') {
+        setError('E-mail ou senha incorretos. Confira os dados e tente novamente.')
+      } else {
+        setError('Não foi possível concluir. Verifique os dados e tente novamente.')
+      }
       return
     }
     router.push('/dashboard')
