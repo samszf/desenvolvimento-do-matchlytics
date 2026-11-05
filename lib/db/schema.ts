@@ -2,7 +2,7 @@ import { boolean, integer, numeric, pgTable, text, timestamp } from 'drizzle-orm
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(), name: text('name').notNull(), email: text('email').notNull().unique(),
-  emailVerified: boolean('emailVerified').notNull().default(false), image: text('image'),
+  emailVerified: boolean('emailVerified').notNull().default(false), image: text('image'), bio: text('bio'), favoriteRole: text('favoriteRole'), favoriteMap: text('favoriteMap'),
   createdAt: timestamp('createdAt').notNull().defaultNow(), updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 })
 export const session = pgTable('session', {
