@@ -49,7 +49,18 @@ As relações abaixo foram calculadas pela fórmula de luminância relativa sRGB
 
 A cor `#586476` sobre `#111923` foi medida em 2,95:1 e não é usada como texto após a auditoria; `#738094` sobre o mesmo fundo mede 4,42:1, abaixo de 4,5:1 para texto comum, e também não foi mantida como texto. A correção foi aplicada na origem visual em `globals.css` para as classes compartilhadas `border-white/8` e `border-white/10`, e nos textos de eixo/metadados que usavam `#687588`.
 
-O gráfico de K/D mantém a linha e os valores, além da descrição textual existente para leitores de tela. ## Lista de jogadores na importação
+O gráfico de K/D mantém a linha e os valores, além da descrição textual existente para leitores de tela.
+
+## Tabelas e gráficos auditados
+
+- A comparação CT/TR em `/matches/[id]` usa `<table>`, `<caption>`, cabeçalho com `scope="col"` e métricas com `scope="row"`. A região de rolagem horizontal recebe foco e nome acessível no mobile, sem duplicar a tabela.
+- `KDChart` mantém os dados reais recebidos pelo dashboard, identifica o gráfico por título e descrição, nomeia os eixos Partida e K/D e marca a camada SVG como decorativa para evitar anúncios duplicados. O controle “Consultar dados do gráfico em tabela” expõe uma alternativa com exatamente os pontos de K/D disponíveis.
+- `/analysis` já utilizava tabela semântica para a comparação CT/TR; `/maps` e `/insights` exibem métricas e textos diretamente, sem gráficos adicionais que exigissem uma alternativa tabular.
+- Vitória, derrota, CT, TR e séries não dependem apenas de cor: recebem texto ou cabeçalhos explícitos.
+
+A validação automatizada desta etapa inclui `pnpm typecheck`, `pnpm test` e `pnpm build`. A revisão de teclado, leitor de tela e breakpoints mobile foi feita estaticamente e deve ser repetida manualmente no navegador; Playwright e axe-core não estão configurados no projeto.
+
+## Lista de jogadores na importação
 
 No desktop, a apresentação mantém a organização em colunas para Jogador, Time, Kills, Deaths, Assists, Headshots, K/D e HS%. Em telas menores, cada jogador mantém a mesma linha de seleção, mas exibe um card de largura total com todas as oito informações visíveis: Nome, Time, Kills, Deaths, Assists, Headshots, K/D e HS%. Nenhuma métrica é ocultada por responsividade e não há uma segunda tabela duplicada na árvore de acessibilidade.
 
