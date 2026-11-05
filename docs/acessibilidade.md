@@ -60,6 +60,16 @@ O gráfico de K/D mantém a linha e os valores, além da descrição textual exi
 
 A validação automatizada desta etapa inclui `pnpm typecheck`, `pnpm test` e `pnpm build`. A revisão de teclado, leitor de tela e breakpoints mobile foi feita estaticamente e deve ser repetida manualmente no navegador; Playwright e axe-core não estão configurados no projeto.
 
+## Formulários, mensagens e estados de interação
+
+Foram auditados login/cadastro, registro manual de partidas, importação de demos, seleção de jogador e edição do perfil. Os campos usam labels associados por `htmlFor`/`id`, nomes acessíveis, foco visível e indicação textual de campos obrigatórios quando aplicável; placeholders permanecem apenas como exemplos.
+
+O formulário de autenticação agora anuncia envio em andamento com `role="status"`, bloqueia envios duplicados, oferece mostrar/ocultar senha com `aria-pressed` e nome acessível, associa mensagens de erro com `aria-describedby` e mantém erros de e-mail duplicado e credenciais inválidas compreensíveis.
+
+O registro de partida anuncia salvamento, usa `aria-busy`, `role="alert"` para falhas e botão de envio explícito. A importação anuncia arquivo selecionado, envio/análise, sucesso, erro e salvamento; aplica `aria-busy`, impede ações concorrentes, associa o seletor de jogador ao texto de ajuda e identifica o jogador selecionado via `role="radio"`/`aria-checked`.
+
+Não foram criados modais novos. Não há biblioteca de testes de componentes/axe configurada neste projeto; a validação automatizada disponível nesta etapa é `pnpm typecheck`, `pnpm test` e `pnpm build`. A revisão manual com teclado, leitor de tela e mensagens nativas de validação deve continuar antes de declarar conformidade WCAG 2.2 AA.
+
 ## Lista de jogadores na importação
 
 No desktop, a apresentação mantém a organização em colunas para Jogador, Time, Kills, Deaths, Assists, Headshots, K/D e HS%. Em telas menores, cada jogador mantém a mesma linha de seleção, mas exibe um card de largura total com todas as oito informações visíveis: Nome, Time, Kills, Deaths, Assists, Headshots, K/D e HS%. Nenhuma métrica é ocultada por responsividade e não há uma segunda tabela duplicada na árvore de acessibilidade.
