@@ -11,7 +11,6 @@ export default defineConfig({
     baseURL: 'http://127.0.0.1:3000',
     colorScheme: 'dark',
     trace: 'retain-on-failure',
-    launchOptions: { args: ['--no-sandbox', '--disable-dev-shm-usage'] },
   },
   webServer: {
     command: 'pnpm dev -H 127.0.0.1',
