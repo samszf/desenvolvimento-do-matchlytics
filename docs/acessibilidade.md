@@ -30,7 +30,7 @@ O layout global fornece o link “Pular para o conteúdo principal”, visualmen
 
 ## Verificações
 
-Executados `pnpm typecheck`, `pnpm test` e `pnpm build` após as alterações. Também foi feita auditoria estática dos landmarks e destinos. Não há Playwright nem axe-core configurados no projeto; portanto, a ativação do skip link e a navegação por teclado em navegador ainda devem ser validadas manualmente.
+Executados `pnpm typecheck`, `pnpm test` e `pnpm build` após as alterações. Também foi feita auditoria estática dos landmarks e destinos. Playwright já estava instalado; nesta etapa foi adicionada a configuração `playwright.config.ts` e `@axe-core/playwright` para auditoria automatizada. `e2e/accessibility.spec.ts` cobre axe em `/sign-in`, `/sign-up` e 404, labels e autocomplete de autenticação, skip link, foco e overflow mobile, além do redirecionamento sem autenticação das rotas protegidas. O axe falha apenas para violações críticas/graves no gate do teste; isso não equivale a conformidade WCAG completa.
 
 ## Auditoria de contraste WCAG 2.2 AA
 
@@ -69,6 +69,14 @@ O formulário de autenticação agora anuncia envio em andamento com `role="stat
 O registro de partida anuncia salvamento, usa `aria-busy`, `role="alert"` para falhas e botão de envio explícito. A importação anuncia arquivo selecionado, envio/análise, sucesso, erro e salvamento; aplica `aria-busy`, impede ações concorrentes, associa o seletor de jogador ao texto de ajuda e identifica o jogador selecionado via `role="radio"`/`aria-checked`.
 
 Não foram criados modais novos. Não há biblioteca de testes de componentes/axe configurada neste projeto; a validação automatizada disponível nesta etapa é `pnpm typecheck`, `pnpm test` e `pnpm build`. A revisão manual com teclado, leitor de tela e mensagens nativas de validação deve continuar antes de declarar conformidade WCAG 2.2 AA.
+
+## Auditoria E2E automatizada
+
+A configuração criada em `playwright.config.ts` define projetos desktop (1366×768) e mobile (390×844), com `@axe-core/playwright`. `e2e/accessibility.spec.ts` cobre as páginas públicas `/`, `/sign-in`, `/sign-up` e 404, além de testar labels, autocomplete, skip link, foco, ausência de overflow horizontal e redirecionamento das rotas autenticadas sem sessão.
+
+Os testes unitários passaram: `pnpm typecheck`, `pnpm test` (3 arquivos, 13 testes) e `pnpm build`. O comando `pnpm test:e2e` foi configurado, mas ficou bloqueado neste sandbox porque o Chromium baixado pelo Playwright não consegue iniciar: a imagem não possui a biblioteca de sistema `libnspr4.so` (`exitCode=127`). Não foi mascarada nenhuma regra do axe nem marcado teste como aprovado artificialmente. A auditoria axe, os tamanhos desktop/mobile e os fluxos de teclado precisam ser executados em um ambiente com as dependências do navegador instaladas.
+
+As rotas autenticadas também permanecem sem cobertura de conteúdo autenticado porque o login está bloqueado pelo HTTP 500/`28P01` de conexão Neon já documentado; os testes cobrem apenas o redirecionamento sem sessão. O axe não comprova conformidade completa, e continuam pendentes validação manual com leitor de tela, zoom/reflow, teclado em todos os controles, diálogos caso sejam adicionados e revisão humana dos contrastes dinâmicos.
 
 ## Lista de jogadores na importação
 
