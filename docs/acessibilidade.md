@@ -30,7 +30,7 @@ O layout global fornece o link “Pular para o conteúdo principal”, visualmen
 
 ## Verificações
 
-Executados `pnpm typecheck`, `pnpm test` e `pnpm build` após as alterações. Também foi feita auditoria estática dos landmarks e destinos. Não há Playwright nem axe-core configurados no projeto; portanto, a ativação do skip link e a navegação por teclado em navegador ainda devem ser validadas manualmente.
+Executados `pnpm typecheck`, `pnpm test` e `pnpm build` após as alterações. Também foi feita auditoria estática dos landmarks e destinos. Playwright já estava instalado; nesta etapa foi adicionada a configuração `playwright.config.ts` e `@axe-core/playwright` para auditoria automatizada. `e2e/accessibility.spec.ts` cobre axe em `/sign-in`, `/sign-up` e 404, labels e autocomplete de autenticação, skip link, foco e overflow mobile, além do redirecionamento sem autenticação das rotas protegidas. O axe falha apenas para violações críticas/graves no gate do teste; isso não equivale a conformidade WCAG completa.
 
 ## Auditoria de contraste WCAG 2.2 AA
 
@@ -49,7 +49,36 @@ As relações abaixo foram calculadas pela fórmula de luminância relativa sRGB
 
 A cor `#586476` sobre `#111923` foi medida em 2,95:1 e não é usada como texto após a auditoria; `#738094` sobre o mesmo fundo mede 4,42:1, abaixo de 4,5:1 para texto comum, e também não foi mantida como texto. A correção foi aplicada na origem visual em `globals.css` para as classes compartilhadas `border-white/8` e `border-white/10`, e nos textos de eixo/metadados que usavam `#687588`.
 
-O gráfico de K/D mantém a linha e os valores, além da descrição textual existente para leitores de tela. ## Lista de jogadores na importação
+O gráfico de K/D mantém a linha e os valores, além da descrição textual existente para leitores de tela.
+
+## Tabelas e gráficos auditados
+
+- A comparação CT/TR em `/matches/[id]` usa `<table>`, `<caption>`, cabeçalho com `scope="col"` e métricas com `scope="row"`. A região de rolagem horizontal recebe foco e nome acessível no mobile, sem duplicar a tabela.
+- `KDChart` mantém os dados reais recebidos pelo dashboard, identifica o gráfico por título e descrição, nomeia os eixos Partida e K/D e marca a camada SVG como decorativa para evitar anúncios duplicados. O controle “Consultar dados do gráfico em tabela” expõe uma alternativa com exatamente os pontos de K/D disponíveis.
+- `/analysis` já utilizava tabela semântica para a comparação CT/TR; `/maps` e `/insights` exibem métricas e textos diretamente, sem gráficos adicionais que exigissem uma alternativa tabular.
+- Vitória, derrota, CT, TR e séries não dependem apenas de cor: recebem texto ou cabeçalhos explícitos.
+
+A validação automatizada desta etapa inclui `pnpm typecheck`, `pnpm test` e `pnpm build`. A revisão de teclado, leitor de tela e breakpoints mobile foi feita estaticamente e deve ser repetida manualmente no navegador; Playwright e axe-core não estão configurados no projeto.
+
+## Formulários, mensagens e estados de interação
+
+Foram auditados login/cadastro, registro manual de partidas, importação de demos, seleção de jogador e edição do perfil. Os campos usam labels associados por `htmlFor`/`id`, nomes acessíveis, foco visível e indicação textual de campos obrigatórios quando aplicável; placeholders permanecem apenas como exemplos.
+
+O formulário de autenticação agora anuncia envio em andamento com `role="status"`, bloqueia envios duplicados, oferece mostrar/ocultar senha com `aria-pressed` e nome acessível, associa mensagens de erro com `aria-describedby` e mantém erros de e-mail duplicado e credenciais inválidas compreensíveis.
+
+O registro de partida anuncia salvamento, usa `aria-busy`, `role="alert"` para falhas e botão de envio explícito. A importação anuncia arquivo selecionado, envio/análise, sucesso, erro e salvamento; aplica `aria-busy`, impede ações concorrentes, associa o seletor de jogador ao texto de ajuda e identifica o jogador selecionado via `role="radio"`/`aria-checked`.
+
+Não foram criados modais novos. Não há biblioteca de testes de componentes/axe configurada neste projeto; a validação automatizada disponível nesta etapa é `pnpm typecheck`, `pnpm test` e `pnpm build`. A revisão manual com teclado, leitor de tela e mensagens nativas de validação deve continuar antes de declarar conformidade WCAG 2.2 AA.
+
+## Auditoria E2E automatizada
+
+A configuração criada em `playwright.config.ts` define projetos desktop (1366×768) e mobile (390×844), com `@axe-core/playwright`. `e2e/accessibility.spec.ts` cobre as páginas públicas `/`, `/sign-in`, `/sign-up` e 404, além de testar labels, autocomplete, skip link, foco, ausência de overflow horizontal e redirecionamento das rotas autenticadas sem sessão.
+
+Os testes unitários passaram: `pnpm typecheck`, `pnpm test` (3 arquivos, 13 testes) e `pnpm build`. O comando `pnpm test:e2e` foi configurado, mas ficou bloqueado neste sandbox porque o Chromium baixado pelo Playwright não consegue iniciar: a imagem não possui a biblioteca de sistema `libnspr4.so` (`exitCode=127`). Não foi mascarada nenhuma regra do axe nem marcado teste como aprovado artificialmente. A auditoria axe, os tamanhos desktop/mobile e os fluxos de teclado precisam ser executados em um ambiente com as dependências do navegador instaladas.
+
+A conexão Neon disponível no ambiente atual foi verificada separadamente com `SELECT 1` e passou; o erro histórico `28P01` não foi reproduzido nesta execução. O ambiente de desenvolvimento e o ambiente provisionado expuseram `DATABASE_URL` funcional, sem exibir valores secretos. As rotas autenticadas continuam sem auditoria de conteúdo com sessão válida: os testes cobrem apenas o redirecionamento sem sessão. Para cobrir conteúdo autenticado com segurança, o CI deve receber uma conta de teste e uma branch/banco Neon isolado via secrets do GitHub; não se deve reutilizar credenciais nem dados de produção. O axe não comprova conformidade completa, e continuam pendentes validação manual com leitor de tela, zoom/reflow, teclado em todos os controles, diálogos caso sejam adicionados e revisão humana dos contrastes dinâmicos.
+
+## Lista de jogadores na importação
 
 No desktop, a apresentação mantém a organização em colunas para Jogador, Time, Kills, Deaths, Assists, Headshots, K/D e HS%. Em telas menores, cada jogador mantém a mesma linha de seleção, mas exibe um card de largura total com todas as oito informações visíveis: Nome, Time, Kills, Deaths, Assists, Headshots, K/D e HS%. Nenhuma métrica é ocultada por responsividade e não há uma segunda tabela duplicada na árvore de acessibilidade.
 
