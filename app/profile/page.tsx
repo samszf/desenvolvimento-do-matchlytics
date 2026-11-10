@@ -3,12 +3,12 @@ import { redirect } from 'next/navigation'
 import { eq } from 'drizzle-orm'
 import { Navigation } from '@/components/navigation'
 import { ProfileForm } from '@/components/profile-form'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { user } from '@/lib/db/schema'
 
 export default async function ProfilePage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession(await headers())
   if (!session?.user) redirect('/sign-in')
   let profile: { name: string; email: string; image: string | null; bio: string | null; favoriteRole: string | null; favoriteMap: string | null } | undefined
   try {

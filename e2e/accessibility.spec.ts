@@ -39,7 +39,6 @@ test('controles principais mantêm foco visível no mobile', async ({ page }) =>
   await expect(page.getByRole('link', { name: 'Pular para o conteúdo principal' })).toBeFocused()
   await page.keyboard.press('Tab')
   await expect(page.getByRole('link', { name: 'Matchlytics início' })).toBeFocused()
-  await page.keyboard.press('Tab')
   const email = page.locator('input[type="email"]')
   const beforeFocus = await email.evaluate((element) => { const style = getComputedStyle(element); return { borderColor: style.borderTopColor, outline: style.outline, boxShadow: style.boxShadow } })
   await page.keyboard.press('Tab')
@@ -54,5 +53,14 @@ for (const route of protectedRoutes) {
   test(`rota protegida redireciona sem autenticação: ${route}`, async ({ page }) => {
     await page.goto(route)
     await expect(page).toHaveURL(/\/sign-in/)
+    await expect(page.getByRole('heading', { name: /Bem-vindo de volta|Crie sua conta/i })).toBeVisible()
   })
 }
+
+test('APIs protegidas retornam 401 sem sessão', async ({ request }) => {
+  for (const route of ['/api/statistics/maps', '/api/insights']) {
+    const response = await request.get(route)
+    expect(response.status(), route).toBe(401)
+    await expect(response.json()).resolves.toMatchObject({ error: 'Não autenticado' })
+  }
+})

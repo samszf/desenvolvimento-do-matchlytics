@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 import { DashboardActions } from '@/components/dashboard-actions'
 import { ArrowRight, BarChart3, Crosshair, Gauge, Trophy } from 'lucide-react'
 import { Navigation } from '@/components/navigation'
@@ -13,7 +13,7 @@ import { KDChart, type KDPoint } from '@/components/kd-chart'
 const mapNames: Record<string, string> = { mirage: 'Mirage', inferno: 'Inferno', ancient: 'Ancient', nuke: 'Nuke', 'dust-2': 'Dust 2', anubis: 'Anubis', vertigo: 'Vertigo' }
 
 export default async function DashboardPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession(await headers())
   if (!session?.user) redirect('/sign-in')
 
   const rows = await db.select().from(matches).leftJoin(matchStatistics, eq(matches.id, matchStatistics.matchId)).where(eq(matches.userId, session.user.id)).orderBy(desc(matches.playedAt))
@@ -47,7 +47,7 @@ export default async function DashboardPage() {
           {metrics.map(({ label, value, change, icon: Icon }) => (
             <div key={label} className="rounded-2xl border border-white/8 bg-[#111720] p-4 sm:p-5">
               <Icon className="mb-5 size-4 text-[#5c9bff]" />
-              <p className="text-xs leading-4 text-[#738094]">{label}</p>
+              <p className="text-xs leading-4 text-[#8995a5]">{label}</p>
               <p className="mt-2 text-2xl font-semibold tracking-tight">{value}</p>
               <p className="mt-2 text-[11px] text-[#8995a5]">{change}</p>
             </div>
@@ -57,14 +57,14 @@ export default async function DashboardPage() {
         <div className="mt-8 grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
           <div className="rounded-2xl border border-white/8 bg-[#111720] p-6">
             <p className="text-xs font-medium text-[#c9d0dc]">Evolução do K/D</p>
-            <p className="mt-2 text-sm leading-6 text-[#738094]">Acompanhe seus últimos resultados e identifique mudanças no desempenho.</p>
+            <p className="mt-2 text-sm leading-6 text-[#8995a5]">Acompanhe seus últimos resultados e identifique mudanças no desempenho.</p>
             <div className="mt-8 rounded-xl border border-white/8 bg-[#0c1118] p-4 sm:p-5">
               <KDChart data={kdData} />
             </div>
           </div>
           <div className="rounded-2xl border border-white/8 bg-[#111720] p-6">
             <p className="text-xs font-medium text-[#c9d0dc]">Partidas recentes</p>
-            {items.length ? <div className="mt-5 flex flex-col gap-3">{items.slice(0, 3).map((item) => <a href={`/matches/${item.id}`} key={item.id} className="flex items-center justify-between rounded-lg border border-white/6 px-3 py-2.5 text-sm transition hover:bg-white/[0.03]"><span><span className="font-medium">{mapNames[item.mapId] ?? item.mapId}</span><span className="ml-2 text-xs text-[#94a0b1]">{item.playerScore}:{item.opponentScore}</span></span><span className={item.result === 'win' ? 'text-[#68d391]' : item.result === 'loss' ? 'text-[#ff8f8f]' : 'text-[#f2c66d]'}>{item.result === 'win' ? 'Vitória' : item.result === 'loss' ? 'Derrota' : 'Empate'}</span></a>)}</div> : <p className="mt-2 text-sm leading-6 text-[#738094]">Nenhuma partida registrada ainda.</p>}
+            {items.length ? <div className="mt-5 flex flex-col gap-3">{items.slice(0, 3).map((item) => <a href={`/matches/${item.id}`} key={item.id} className="flex items-center justify-between rounded-lg border border-white/6 px-3 py-2.5 text-sm transition hover:bg-white/[0.03]"><span><span className="font-medium">{mapNames[item.mapId] ?? item.mapId}</span><span className="ml-2 text-xs text-[#94a0b1]">{item.playerScore}:{item.opponentScore}</span></span><span className={item.result === 'win' ? 'text-[#68d391]' : item.result === 'loss' ? 'text-[#ff8f8f]' : 'text-[#f2c66d]'}>{item.result === 'win' ? 'Vitória' : item.result === 'loss' ? 'Derrota' : 'Empate'}</span></a>)}</div> : <p className="mt-2 text-sm leading-6 text-[#8995a5]">Nenhuma partida registrada ainda.</p>}
             <a href={items.length ? '/matches' : '/matches/new'} className="mt-6 inline-block text-sm font-semibold text-[#7fb0ff] transition hover:text-white">{items.length ? 'Ver histórico completo' : 'Adicionar primeira partida'} <ArrowRight className="ml-1 inline size-4" /></a>
           </div>
         </div>
