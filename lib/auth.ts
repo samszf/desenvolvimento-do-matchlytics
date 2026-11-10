@@ -12,3 +12,11 @@ export const auth = betterAuth({
   session: { expiresIn: 60 * 60 * 24 * 7, updateAge: 60 * 60 * 24 },
   ...(process.env.NODE_ENV === 'development' ? { advanced: { defaultCookieAttributes: { sameSite: 'none' as const, secure: true } } } : {}),
 })
+
+export async function getSession(requestHeaders: Headers) {
+  try {
+    return await auth.api.getSession({ headers: requestHeaders })
+  } catch {
+    return null
+  }
+}

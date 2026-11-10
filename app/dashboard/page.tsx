@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 import { DashboardActions } from '@/components/dashboard-actions'
 import { ArrowRight, BarChart3, Crosshair, Gauge, Trophy } from 'lucide-react'
 import { Navigation } from '@/components/navigation'
@@ -13,7 +13,7 @@ import { KDChart, type KDPoint } from '@/components/kd-chart'
 const mapNames: Record<string, string> = { mirage: 'Mirage', inferno: 'Inferno', ancient: 'Ancient', nuke: 'Nuke', 'dust-2': 'Dust 2', anubis: 'Anubis', vertigo: 'Vertigo' }
 
 export default async function DashboardPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession(await headers())
   if (!session?.user) redirect('/sign-in')
 
   const rows = await db.select().from(matches).leftJoin(matchStatistics, eq(matches.id, matchStatistics.matchId)).where(eq(matches.userId, session.user.id)).orderBy(desc(matches.playedAt))

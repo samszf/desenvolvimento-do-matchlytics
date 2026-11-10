@@ -2,7 +2,7 @@ import { and, desc, eq } from 'drizzle-orm'
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { CalendarDays, ChevronRight, Crosshair, Plus, Trophy } from 'lucide-react'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 import { Navigation } from '@/components/navigation'
 import { db } from '@/lib/db'
 import { matchStatistics, matches } from '@/lib/db/schema'
@@ -17,7 +17,7 @@ function formatDate(date: Date) {
 }
 
 export default async function MatchesPage() {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession(await headers())
   if (!session?.user) redirect('/sign-in')
 
   const rows = await db.select({ match: matches, stats: matchStatistics })

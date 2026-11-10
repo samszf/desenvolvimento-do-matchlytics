@@ -4,7 +4,7 @@ import { eq, and } from 'drizzle-orm'
 import { ArrowLeft, BarChart3, Target } from 'lucide-react'
 import { performanceScore } from '@/lib/analytics'
 import { DeleteMatchButton } from '@/components/delete-match-button'
-import { auth } from '@/lib/auth'
+import { getSession } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { matchStatistics, matches } from '@/lib/db/schema'
 
@@ -12,7 +12,7 @@ const names: Record<string, string> = { mirage: 'Mirage', inferno: 'Inferno', an
 const metric = (value: number | string | null | undefined) => value == null ? '—' : Number(value).toFixed(2)
 
 export default async function MatchDetails({ params }: { params: Promise<{ id: string }> }) {
-  const session = await auth.api.getSession({ headers: await headers() })
+  const session = await getSession(await headers())
   if (!session?.user) redirect('/sign-in')
   const { id } = await params
   const rows = await db.select({ match: matches, stats: matchStatistics }).from(matches).leftJoin(matchStatistics, eq(matchStatistics.matchId, matches.id)).where(and(eq(matches.id, id), eq(matches.userId, session.user.id)))
