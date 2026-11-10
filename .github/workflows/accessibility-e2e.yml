@@ -28,7 +28,7 @@ jobs:
           --health-retries 5
     env:
       BETTER_AUTH_URL: http://127.0.0.1:3000
-      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET_TEST }}
+      BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET_TEST || 'ci-only-matchlytics-e2e-secret-rotate-if-exposed' }}
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/matchlytics_test
       PGHOST: 127.0.0.1
       PGUSER: postgres
