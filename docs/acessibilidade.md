@@ -76,7 +76,7 @@ A configuração criada em `playwright.config.ts` define projetos desktop Chromi
 
 O relatório identificou `aria-required-children` na página inicial porque filtros visuais estavam marcados como `tablist` sem tabs/painéis correspondentes. Eles foram corrigidos para um grupo de botões com `aria-pressed`, sem ARIA de tabs indevida. Os textos pequenos da prévia da home que usavam `#738094` foram promovidos para `#8995a5`, preservando a paleta escura e elevando o contraste normal acima de 4,5:1 nos fundos da dashboard. Os contrastes de autenticação e 404 foram revisados contra os fundos efetivamente renderizados; não foram adicionadas exceções ao axe.
 
-O teste de foco agora respeita a ordem real skip link → Matchlytics início → e-mail, captura os estilos antes do foco, confirma foco por teclado e verifica mudança de `borderColor`, `outline` ou `boxShadow`, mantendo o teste de overflow em 390×844.
+O teste de foco agora respeita a ordem real skip link → Matchlytics início → e-mail, captura os estilos do campo antes do terceiro Tab, confirma foco por teclado sem foco programático e verifica mudança de `borderColor`, `outline` ou `boxShadow`, mantendo o teste de overflow em 390×844. As APIs `/api/statistics/maps` e `/api/insights` também têm teste explícito de HTTP 401 sem sessão.
 
 O workflow instala Chromium e WebKit. O CI agora inicia PostgreSQL 16 descartável em `127.0.0.1:5432`, executa `pnpm db:init:test` com o schema real (tabelas Better Auth e domínio da aplicação), define `BETTER_AUTH_URL` e usa o secret GitHub `BETTER_AUTH_SECRET_TEST`, exclusivo de CI. Nenhuma credencial de produção é usada ou impressa. O `SELECT 1` no Neon do ambiente atual também passou; isso não substitui o banco isolado do CI.
 

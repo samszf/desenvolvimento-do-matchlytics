@@ -1,16 +1,10 @@
-'use client'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { ArrowLeft, BarChart3, Target } from 'lucide-react'
-import { formatMetric } from '@/lib/analytics'
-import { Navigation } from '@/components/navigation'
+import { headers } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { auth } from '@/lib/auth'
+import AnalysisPage from '@/components/analysis-page'
 
-type SideStats = { kills:number; deaths:number; assists:number; headshots:number; adr:number|null; kd:number|null }
-type Overview = { summary: { total:number; winRate:number|null; kd:number|null; adr:number|null; score:number|null }; sides?: { ct: SideStats; tr: SideStats }; matches: { playedAt:string; kd:number|null; adr:number|null; score:number; result:string }[] }
-export default function AnalysisPage() {
-  const [data, setData] = useState<Overview | null>(null)
-  useEffect(() => { fetch('/api/statistics/overview').then(r => r.json()).then(setData) }, [])
-  const summary = data?.summary
-  const sides = data?.sides
-  return <><Navigation/><main id="main-content" tabIndex={-1} className="min-h-screen bg-[#080b10] text-[#f5f7fa]"><div className="px-5 py-8 lg:px-10"><div className="mx-auto max-w-6xl"><Link href="/dashboard" className="flex items-center gap-2 text-sm text-[#8995a5]"><ArrowLeft className="size-4"/>Dashboard</Link><div className="mt-10 flex items-center gap-3"><BarChart3 className="size-6 text-[#5c9bff]"/><div><p className="text-xs uppercase tracking-[.2em] text-[#7fb0ff]">Análise</p><h1 className="text-4xl font-semibold tracking-tight">Sua evolução</h1></div></div><div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">{[['Partidas',summary?.total ?? 0],['Win Rate',formatMetric(summary?.winRate ?? null,'%')],['K/D',formatMetric(summary?.kd ?? null)],['ADR',formatMetric(summary?.adr ?? null)],['Score',formatMetric(summary?.score ?? null)]].map(([label,value])=><div className="rounded-2xl border border-white/10 bg-[#111720] p-5" key={label as string}><p className="text-xs text-[#8995a5]">{label}</p><p className="mt-3 text-2xl font-semibold">{value}</p></div>)}</div>{sides && <section className="mt-6 rounded-2xl border border-white/10 bg-[#111720] p-6"><h2 className="text-lg font-semibold">Comparação CT x TR</h2><p className="mt-1 text-sm text-[#8995a5]">Agregados calculados exclusivamente das estatísticas informadas em cada partida.</p><div className="mt-5 overflow-x-auto"><table className="w-full min-w-[520px] text-left text-sm"><caption className="sr-only">Comparação agregada de métricas entre CT e TR</caption><thead><tr className="border-b border-white/10 text-[#8995a5]"><th scope="col" className="pb-3 font-medium">Métrica</th><th scope="col" className="pb-3 font-medium">CT</th><th scope="col" className="pb-3 font-medium">TR</th></tr></thead><tbody>{[['K/D','kd'],['ADR','adr'],['Kills','kills'],['Deaths','deaths'],['Assists','assists'],['Headshots','headshots']].map(([label,key])=><tr className="border-b border-white/5" key={key}><th className="py-3 font-medium">{label}</th><td className="py-3">{formatMetric(sides.ct[key as keyof SideStats] as number | null)}</td><td className="py-3">{formatMetric(sides.tr[key as keyof SideStats] as number | null)}</td></tr>)}</tbody></table></div></section>}<section className="mt-6 rounded-2xl border border-white/10 bg-[#111720] p-6"><h2 className="flex items-center gap-2 font-medium"><Target className="size-4 text-[#5c9bff]"/>Últimas partidas</h2><div className="mt-5 flex flex-col gap-3">{data?.matches.slice(0,10).map((m,i)=><div className="flex items-center justify-between border-b border-white/5 pb-3 text-sm" key={i}><span className="text-[#8995a5]">{new Date(m.playedAt).toLocaleDateString('pt-BR')}</span><span>K/D {formatMetric(m.kd)} · ADR {formatMetric(m.adr)} · Score {m.score}</span><span className={m.result==='win'?'text-emerald-400': 'text-rose-400'}>{m.result==='win'?'Vitória':'Derrota'}</span></div>) ?? <p className="text-sm text-[#8995a5]">Carregando dados reais...</p>}</div></section></div></div></main></>
+export default async function AnalysisRoute() {
+  const session = await auth.api.getSession({ headers: await headers() })
+  if (!session?.user) redirect('/sign-in')
+  return <AnalysisPage />
 }
