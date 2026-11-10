@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "db:init:test": "node scripts/init-test-db.mjs",
     "start": "next start"
   },
   "dependencies": {

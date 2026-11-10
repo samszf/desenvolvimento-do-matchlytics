@@ -5,11 +5,13 @@ const publicRoutes = ['/', '/sign-in', '/sign-up', '/this-route-does-not-exist']
 const protectedRoutes = ['/dashboard', '/matches', '/matches/new', '/matches/import', '/matches/1', '/analysis', '/maps', '/insights']
 
 for (const route of publicRoutes) {
-  test(`axe: ${route}`, async ({ page }) => {
+  test(`axe: ${route}`, async ({ page }, testInfo) => {
     await page.goto(route)
     await expect(page.locator('main#main-content')).toBeVisible()
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21aa', 'wcag22aa']).analyze()
-    expect(results.violations.filter((violation) => ['critical', 'serious'].includes(violation.impact ?? '')).map(({ id, impact, nodes }) => ({ id, impact, nodes: nodes.length }))).toEqual([])
+    await testInfo.attach(`axe-${route === '/' ? 'home' : route.replaceAll('/', '-') || 'page'}.json`, { body: JSON.stringify(results, null, 2), contentType: 'application/json' })
+    const blockingViolations = results.violations.filter((violation) => ['critical', 'serious'].includes(violation.impact ?? ''))
+    expect(blockingViolations, JSON.stringify(blockingViolations, null, 2)).toEqual([])
   })
 }
 
@@ -36,7 +38,14 @@ test('controles principais mantêm foco visível no mobile', async ({ page }) =>
   await page.keyboard.press('Tab')
   await expect(page.getByRole('link', { name: 'Pular para o conteúdo principal' })).toBeFocused()
   await page.keyboard.press('Tab')
-  await expect(page.locator('input[type="email"]')).toBeFocused()
+  await expect(page.getByRole('link', { name: 'Matchlytics início' })).toBeFocused()
+  await page.keyboard.press('Tab')
+  const email = page.locator('input[type="email"]')
+  const beforeFocus = await email.evaluate((element) => { const style = getComputedStyle(element); return { borderColor: style.borderTopColor, outline: style.outline, boxShadow: style.boxShadow } })
+  await page.keyboard.press('Tab')
+  await expect(email).toBeFocused()
+  const afterFocus = await email.evaluate((element) => { const style = getComputedStyle(element); return { borderColor: style.borderTopColor, outline: style.outline, boxShadow: style.boxShadow } })
+  expect(afterFocus).not.toEqual(beforeFocus)
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)
   expect(overflow).toBe(false)
 })
