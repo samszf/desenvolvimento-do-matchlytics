@@ -10,7 +10,7 @@ Kills, deaths e assists são contados a partir de `player_death`, pelos papéis 
 
 SteamID é a identidade canônica. A importação seleciona o jogador pelo SteamID retornado, não pelo nome. Nomes são apenas rótulos. O lado de cada contribuição é resolvido a partir do campo de equipe do papel correspondente no evento ou do `team_num` amostrado no tick do evento; não se deve inferir o lado da vítima ou do assistente a partir do atacante. Eventos sem lado mantêm sua contagem geral, ficam fora de CT/TR e deixam a reconciliação incompleta.
 
-A versão atual não inclui fixtures de demo ou resultados reais dos campos de equipe por participante. A aceitação de eventos com identificadores ambíguos (userid/nome/entity) e a cobertura de mudanças de equipe durante overtime ainda dependem de validação com demos representativas.
+A resolução de eventos aceita apenas campos SteamID diretos e reconhecidos; userid, XUID, nome e entityid não são convertidos em SteamID. Se o evento não trouxer SteamID, essa participação não é contabilizada e os avisos de análise registram a limitação. A versão atual não inclui fixtures de demo nem resultados reais dos campos de equipe por participante; a cobertura de mudanças de equipe durante overtime ainda depende de validação com demos representativas.
 
 ## Fórmulas e ausência de dados
 
