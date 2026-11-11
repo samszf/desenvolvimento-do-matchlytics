@@ -1,7 +1,9 @@
-export type ImportedSideStats = { kills: number; deaths: number; assists: number; headshots: number; adr: number | null; kd: number; hsPercentage: number }
+export type ImportedSideStats = { kills: number; deaths: number; assists: number; headshots: number; adr: number | null; kd: number | null; hsPercentage: number | null }
 export type ImportedStats = { kills: number | null; deaths: number | null; assists: number | null; headshots: number | null; kd: number | null; hsPercentage: number | null; adr: number | null; kast: number | null; ct: ImportedSideStats; tr: ImportedSideStats }
 export type ImportedPlayer = { steamId: string; name: string; team: string | null; stats: ImportedStats }
-export type ImportedMatch = { map: string | null; playedAt: string | null; players: ImportedPlayer[]; stats: ImportedStats; source: 'demo'; warnings: string[] }
+export type ImportedMatch = { map: string | null; playedAt: string | null; players: ImportedPlayer[]; stats: ImportedStats; source: 'demo'; warnings: string[]; reconciliation?: import('./integrity').ReconciliationItem[] }
+
+import { addPlayerEvent, deriveMetrics, reconcileMetrics } from './integrity'
 
 function rows(value: unknown): Record<string, unknown>[] {
   if (Array.isArray(value)) return value.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object'))
@@ -18,8 +20,8 @@ function field(row: Record<string, unknown>, ...keys: string[]) { for (const key
 function playerKey(row: Record<string, unknown>) { return text(field(row, 'steamid', 'steamId', 'steam_id', 'steamid64', 'steamId64', 'xuid', 'xuid64')) }
 function isHeadshot(value: unknown) { return value === true || value === 1 || value === '1' || value === 'true' || value === 'TRUE' }
 type SideRaw = { kills: number; deaths: number; assists: number; headshots: number; damage: number; rounds: number }
-function sideMetrics(raw: SideRaw): ImportedSideStats { return { kills: raw.kills, deaths: raw.deaths, assists: raw.assists, headshots: raw.headshots, adr: raw.rounds > 0 ? raw.damage / raw.rounds : null, kd: raw.deaths > 0 ? raw.kills / raw.deaths : raw.kills, hsPercentage: raw.kills > 0 ? raw.headshots / raw.kills * 100 : 0 } }
-function metrics(raw: { kills: number; deaths: number; assists: number; headshots: number }, sides?: { ct: SideRaw; tr: SideRaw }): ImportedStats { const ct = sides?.ct ?? { kills: 0, deaths: 0, assists: 0, headshots: 0, damage: 0, rounds: 0 }; const tr = sides?.tr ?? { kills: 0, deaths: 0, assists: 0, headshots: 0, damage: 0, rounds: 0 }; return { ...raw, kd: raw.deaths > 0 ? raw.kills / raw.deaths : raw.kills, hsPercentage: raw.kills > 0 ? raw.headshots / raw.kills * 100 : 0, adr: null, kast: null, ct: sideMetrics(ct), tr: sideMetrics(tr) } }
+function sideMetrics(raw: SideRaw): ImportedSideStats { const derived = deriveMetrics(raw); return { kills: raw.kills, deaths: raw.deaths, assists: raw.assists, headshots: raw.headshots, adr: raw.rounds > 0 ? raw.damage / raw.rounds : null, kd: derived.kd, hsPercentage: derived.hsPercentage } }
+function metrics(raw: { kills: number; deaths: number; assists: number; headshots: number }, sides?: { ct: SideRaw; tr: SideRaw }): ImportedStats { const ct = sides?.ct ?? { kills: 0, deaths: 0, assists: 0, headshots: 0, damage: 0, rounds: 0 }; const tr = sides?.tr ?? { kills: 0, deaths: 0, assists: 0, headshots: 0, damage: 0, rounds: 0 }; const derived = deriveMetrics(raw); return { ...raw, kd: derived.kd, hsPercentage: derived.hsPercentage, adr: null, kast: null, ct: sideMetrics(ct), tr: sideMetrics(tr) } }
 
 export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
   const { parseEvent, parseHeader, parsePlayerInfo, parseTicks } = await import('@laihoe/demoparser2')
@@ -64,11 +66,11 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
   const seen = new Set<string>()
   let resolvedVictims = 0
   let unresolvedVictims = 0
-  for (const [index, event] of deaths.entries()) {
+  for (const event of deaths) {
     const attacker = resolvePlayer(field(event, 'attacker_steamid', 'attackerSteamId', 'attacker_xuid', 'attacker'))
     const victim = resolvePlayer(field(event, 'user_steamid', 'user_xuid', 'victim_steamid', 'victim_xuid', 'steamid', 'steamId', 'xuid', 'name', 'victim_name', 'userid', 'victim'))
     const assister = resolvePlayer(field(event, 'assister_steamid', 'assisterSteamId', 'assister_xuid', 'assister'))
-    const key = `${index}:${attacker}:${victim}:${assister}:${text(field(event, 'headshot', 'is_headshot'))}`
+    const key = `${text(field(event, 'tick'))}:${attacker}:${victim}:${assister}:${text(field(event, 'headshot', 'is_headshot'))}`
     if (seen.has(key)) continue
     seen.add(key)
     if (victim) resolvedVictims += 1
@@ -76,24 +78,26 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
     ensurePlayer(attacker, field(event, 'attacker_name', 'attackerName'))
     ensurePlayer(victim, field(event, 'name', 'player_name', 'victim_name', 'victimName'))
     ensurePlayer(assister, field(event, 'assister_name', 'assisterName'))
-    if (statMap.has(attacker)) { const stat = statMap.get(attacker)!; stat.kills += 1; const side = sideStat(attacker, sideFor(event, attacker, 'attacker')); if (side) { side.kills += 1; if (isHeadshot(field(event, 'headshot', 'is_headshot'))) side.headshots += 1 } }
-    if (statMap.has(victim)) { statMap.get(victim)!.deaths += 1; const side = sideStat(victim, sideFor(event, victim, 'victim')); if (side) side.deaths += 1 }
-    if (statMap.has(assister)) { statMap.get(assister)!.assists += 1; const side = sideStat(assister, sideFor(event, assister, 'assister')); if (side) side.assists += 1 }
+    if (statMap.has(attacker)) { const stat = statMap.get(attacker)!; const side = sideStat(attacker, sideFor(event, attacker, 'attacker')); const sidePair = sideMap.get(attacker)!; addPlayerEvent(stat, { ct: sidePair.ct, tr: sidePair.tr }, 'kills', side === sidePair.ct ? 'ct' : side === sidePair.tr ? 'tr' : null, isHeadshot(field(event, 'headshot', 'is_headshot'))) }
+    if (statMap.has(victim)) { const stat = statMap.get(victim)!; const side = sideStat(victim, sideFor(event, victim, 'victim')); const sidePair = sideMap.get(victim)!; addPlayerEvent(stat, { ct: sidePair.ct, tr: sidePair.tr }, 'deaths', side === sidePair.ct ? 'ct' : side === sidePair.tr ? 'tr' : null) }
+    if (statMap.has(assister)) { const stat = statMap.get(assister)!; const side = sideStat(assister, sideFor(event, assister, 'assister')); const sidePair = sideMap.get(assister)!; addPlayerEvent(stat, { ct: sidePair.ct, tr: sidePair.tr }, 'assists', side === sidePair.ct ? 'ct' : side === sidePair.tr ? 'tr' : null) }
   }
   const players = [...statMap.entries()].map(([steamId, raw]) => ({ steamId, name: playerNames.get(steamId) || 'Jogador', team: rawPlayers.find((player) => player.steamId === steamId)?.team ?? null, stats: metrics(raw, sideMap.get(steamId)) }))
   if (!players.length) warnings.push('Não foi possível identificar jogadores nesta demo.')
   if (!deaths.length) warnings.push('A demo não expôs eventos de eliminação suficientes para calcular estatísticas automaticamente.')
-  const totals = [...sideMap.values()].reduce((sum, sides) => ({ kills: sum.kills + sides.ct.kills + sides.tr.kills, deaths: sum.deaths + sides.ct.deaths + sides.tr.deaths, assists: sum.assists + sides.ct.assists + sides.tr.assists, headshots: sum.headshots + sides.ct.headshots + sides.tr.headshots }), { kills: 0, deaths: 0, assists: 0, headshots: 0 })
-  const general = [...statMap.values()].reduce((sum, stat) => ({ kills: sum.kills + stat.kills, deaths: sum.deaths + stat.deaths, assists: sum.assists + stat.assists, headshots: sum.headshots + stat.headshots }), { kills: 0, deaths: 0, assists: 0, headshots: 0 })
-  if (general.kills !== totals.kills || general.deaths !== totals.deaths || general.assists !== totals.assists || general.headshots !== totals.headshots) warnings.push(`Não foi possível classificar todos os eventos por lado: geral K/D/A/HS ${general.kills}/${general.deaths}/${general.assists}/${general.headshots}; lados ${totals.kills}/${totals.deaths}/${totals.assists}/${totals.headshots}.`)
-  if (process.env.NODE_ENV !== 'production') console.log('[demo-parser] jogadores:', statMap.size, 'player_death:', deaths.length, 'vítimas resolvidas:', resolvedVictims, 'eventos sem side resolvido:', unresolvedSides.size, 'CT:', [...sideMap.values()].reduce((sum, sides) => sum + sides.ct.kills, 0), 'TR:', [...sideMap.values()].reduce((sum, sides) => sum + sides.tr.kills, 0))
-  warnings.push(`player_death: ${deaths.length} eventos, ${resolvedVictims} vítimas resolvidas, ${unresolvedVictims} não resolvidas, ${general.deaths} deaths contabilizadas.`)
-  const empty = metrics({ kills: 0, deaths: 0, assists: 0, headshots: 0 })
   const selected = players.reduce((best, player) => (player.stats.kills ?? 0) > (best?.stats.kills ?? -1) ? player : best, players[0])
-  return { map: typeof header.map_name === 'string' ? header.map_name : typeof header.map === 'string' ? header.map : null, playedAt: null, players, stats: selected?.stats ?? empty, source: 'demo', warnings }
+  const selectedRaw = selected ? statMap.get(selected.steamId) : null
+  const selectedSides = selected ? sideMap.get(selected.steamId) : null
+  const reconciliation = selectedRaw && selectedSides ? reconcileMetrics(selectedRaw, { ct: selectedSides.ct, tr: selectedSides.tr }, { unresolvedEvents: unresolvedSides.has(selected.steamId) ? 1 : 0 }) : []
+  const failedReconciliations = reconciliation.filter((item) => item.status !== 'approved')
+  if (failedReconciliations.length) warnings.push(`Reconciliação incompleta para ${selected?.name ?? 'jogador selecionado'}: ${failedReconciliations.map((item) => `${item.indicator} geral ${item.general}, CT ${item.ct}, TR ${item.tr} (${item.status})`).join('; ')}.`)
+  if (process.env.NODE_ENV !== 'production') console.log('[demo-parser] jogadores:', statMap.size, 'player_death:', deaths.length, 'vítimas resolvidas:', resolvedVictims, 'eventos sem side resolvido:', unresolvedSides.size)
+  warnings.push(`player_death: ${deaths.length} eventos, ${resolvedVictims} vítimas resolvidas, ${unresolvedVictims} não resolvidas.`)
+  const empty = metrics({ kills: 0, deaths: 0, assists: 0, headshots: 0 })
+  return { map: typeof header.map_name === 'string' ? header.map_name : typeof header.map === 'string' ? header.map : null, playedAt: null, players, stats: selected?.stats ?? empty, source: 'demo', warnings, reconciliation }
 }
 
-export function calculateImportedMetrics(stats: ImportedStats) { return { kd: stats.deaths == null ? null : stats.deaths > 0 ? (stats.kills ?? 0) / stats.deaths : stats.kills ?? 0, hsPercent: stats.kills == null || stats.kills === 0 ? 0 : (stats.headshots ?? 0) / stats.kills * 100 } }
+export function calculateImportedMetrics(stats: ImportedStats) { return { ...deriveMetrics(stats) } }
 
 export type { ImportedStats as DemoStats }
 export type { ImportedPlayer as DemoPlayer }
