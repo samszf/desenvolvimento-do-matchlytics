@@ -4,6 +4,7 @@ export type ImportedPlayer = { steamId: string; name: string; team: string | nul
 export type ImportedMatch = { map: string | null; playedAt: string | null; players: ImportedPlayer[]; stats: ImportedStats; source: 'demo'; warnings: string[]; reconciliation?: import('./integrity').ReconciliationItem[] }
 
 import { addPlayerEvent, deriveMetrics, reconcileMetrics } from './integrity'
+import { normalizeMapName } from '@/lib/maps'
 
 function rows(value: unknown): Record<string, unknown>[] {
   if (Array.isArray(value)) return value.filter((item): item is Record<string, unknown> => Boolean(item && typeof item === 'object'))
@@ -82,7 +83,8 @@ export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
   if (process.env.NODE_ENV !== 'production') console.log('[demo-parser] jogadores:', statMap.size, 'player_death:', deaths.length, 'vítimas resolvidas:', resolvedVictims, 'eventos sem side resolvido:', unresolvedSides.size)
   warnings.push(`player_death: ${deaths.length} eventos, ${resolvedVictims} vítimas resolvidas, ${unresolvedVictims} não resolvidas.`)
   const empty = metrics({ kills: 0, deaths: 0, assists: 0, headshots: 0 })
-  return { map: typeof header.map_name === 'string' ? header.map_name : typeof header.map === 'string' ? header.map : null, playedAt: null, players, stats: selected?.stats ?? empty, source: 'demo', warnings, reconciliation }
+  const parsedMap = normalizeMapName(field(header, 'map_name', 'map'))
+  return { map: parsedMap.name, playedAt: null, players, stats: selected?.stats ?? empty, source: 'demo', warnings, reconciliation }
 }
 
 export function calculateImportedMetrics(stats: ImportedStats) { return { ...deriveMetrics(stats) } }

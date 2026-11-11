@@ -9,8 +9,7 @@ import { db } from '@/lib/db'
 import { matchStatistics, matches } from '@/lib/db/schema'
 import { formatMetric, performanceScore, ratio, summarize } from '@/lib/analytics'
 import { KDChart, type KDPoint } from '@/components/kd-chart'
-
-const mapNames: Record<string, string> = { mirage: 'Mirage', inferno: 'Inferno', ancient: 'Ancient', nuke: 'Nuke', 'dust-2': 'Dust 2', anubis: 'Anubis', vertigo: 'Vertigo' }
+import { normalizeMapName } from '@/lib/maps'
 
 export default async function DashboardPage() {
   const session = await getSession(await headers())
@@ -64,7 +63,7 @@ export default async function DashboardPage() {
           </div>
           <div className="rounded-2xl border border-white/8 bg-[#111720] p-6">
             <p className="text-xs font-medium text-[#c9d0dc]">Partidas recentes</p>
-            {items.length ? <div className="mt-5 flex flex-col gap-3">{items.slice(0, 3).map((item) => <a href={`/matches/${item.id}`} key={item.id} className="flex items-center justify-between rounded-lg border border-white/6 px-3 py-2.5 text-sm transition hover:bg-white/[0.03]"><span><span className="font-medium">{mapNames[item.mapId] ?? item.mapId}</span><span className="ml-2 text-xs text-[#94a0b1]">{item.playerScore}:{item.opponentScore}</span></span><span className={item.result === 'win' ? 'text-[#68d391]' : item.result === 'loss' ? 'text-[#ff8f8f]' : 'text-[#f2c66d]'}>{item.result === 'win' ? 'Vitória' : item.result === 'loss' ? 'Derrota' : 'Empate'}</span></a>)}</div> : <p className="mt-2 text-sm leading-6 text-[#8995a5]">Nenhuma partida registrada ainda.</p>}
+            {items.length ? <div className="mt-5 flex flex-col gap-3">{items.slice(0, 3).map((item) => <a href={`/matches/${item.id}`} key={item.id} className="flex items-center justify-between rounded-lg border border-white/6 px-3 py-2.5 text-sm transition hover:bg-white/[0.03]"><span><span className="font-medium">{normalizeMapName(item.mapId).name ?? item.mapId}</span><span className="ml-2 text-xs text-[#94a0b1]">{item.playerScore}:{item.opponentScore}</span></span><span className={item.result === 'win' ? 'text-[#68d391]' : item.result === 'loss' ? 'text-[#ff8f8f]' : 'text-[#f2c66d]'}>{item.result === 'win' ? 'Vitória' : item.result === 'loss' ? 'Derrota' : 'Empate'}</span></a>)}</div> : <p className="mt-2 text-sm leading-6 text-[#8995a5]">Nenhuma partida registrada ainda.</p>}
             <a href={items.length ? '/matches' : '/matches/new'} className="mt-6 inline-block text-sm font-semibold text-[#7fb0ff] transition hover:text-white">{items.length ? 'Ver histórico completo' : 'Adicionar primeira partida'} <ArrowRight className="ml-1 inline size-4" /></a>
           </div>
         </div>

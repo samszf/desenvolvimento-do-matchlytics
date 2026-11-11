@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { matchStatistics, matches } from '@/lib/db/schema'
+import { normalizeMapName } from '@/lib/maps'
 
 const updateSchema = z.object({
   map: z.string().min(2).max(40).optional(),
@@ -45,8 +46,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const parsed = updateSchema.safeParse(await request.json())
   if (!parsed.success) return NextResponse.json({ error: 'Confira os dados informados.' }, { status: 400 })
   const data = parsed.data
+  const normalizedMap = data.map === undefined ? null : normalizeMapName(data.map)
+  if (data.map !== undefined && !normalizedMap?.key) return NextResponse.json({ error: 'Selecione um mapa válido.' }, { status: 400 })
   const matchUpdate = {
-    ...(data.map === undefined ? {} : { mapId: data.map.toLowerCase().replaceAll(' ', '-') }),
+    ...(normalizedMap?.key ? { mapId: normalizedMap.key } : {}),
     ...(data.playedAt === undefined ? {} : { playedAt: data.playedAt }),
     ...(data.result === undefined ? {} : { result: data.result }),
     ...(data.playerScore === undefined ? {} : { playerScore: data.playerScore }),
