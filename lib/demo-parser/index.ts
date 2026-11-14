@@ -25,17 +25,27 @@ function sideMetrics(raw: SideRaw): ImportedSideStats { const derived = deriveMe
 function metrics(raw: { kills: number; deaths: number; assists: number; headshots: number }, sides?: { ct: SideRaw; tr: SideRaw }): ImportedStats { const ct = sides?.ct ?? { kills: 0, deaths: 0, assists: 0, headshots: 0, damage: 0, rounds: 0 }; const tr = sides?.tr ?? { kills: 0, deaths: 0, assists: 0, headshots: 0, damage: 0, rounds: 0 }; const derived = deriveMetrics(raw); return { ...raw, kd: derived.kd, hsPercentage: derived.hsPercentage, adr: null, kast: null, ct: sideMetrics(ct), tr: sideMetrics(tr) } }
 
 export async function parseDemo(buffer: Buffer): Promise<ImportedMatch> {
-  const { parseEvent, parseHeader, parsePlayerInfo, parseTicks } = await import('@laihoe/demoparser2')
+  const runParserOperation = async <T>(operation: string, action: () => T | Promise<T>): Promise<T> => {
+    try {
+      return await action()
+    } catch (cause) {
+      const error = new Error(cause instanceof Error ? cause.message : String(cause), { cause })
+      error.name = 'DemoParserOperationError'
+      Object.assign(error, { operation })
+      throw error
+    }
+  }
+  const { parseEvent, parseHeader, parsePlayerInfo, parseTicks } = await runParserOperation('loadParser', () => import('@laihoe/demoparser2'))
   const sideFromTeamNum = (teamNum: unknown): 'CT' | 'TR' | null => { const value = Number(teamNum); return value === 3 ? 'CT' : value === 2 ? 'TR' : null }
   const warnings: string[] = []
-  const header = parseHeader(buffer) as Record<string, unknown>
-  const info = rows(parsePlayerInfo(buffer))
+  const header = await runParserOperation('parseHeader', () => parseHeader(buffer)) as Record<string, unknown>
+  const info = rows(await runParserOperation('parsePlayerInfo', () => parsePlayerInfo(buffer)))
   const rawPlayers = Array.from(new Map(info.map((player) => { const steamId = playerKey(player); return [steamId, { steamId, name: text(field(player, 'name', 'player_name', 'playerName')) || 'Jogador', team: field(player, 'team', 'team_num', 'teamNumber') == null ? null : text(field(player, 'team', 'team_num', 'teamNumber')) }] })).values()).filter((player) => player.steamId)
   const statMap = new Map<string, { kills: number; deaths: number; assists: number; headshots: number }>(rawPlayers.map((player) => [player.steamId, { kills: 0, deaths: 0, assists: 0, headshots: 0 }]))
   const resolvePlayer = (value: unknown) => { const candidate = text(value); return statMap.has(candidate) ? candidate : '' }
-  const deaths = rows(parseEvent(buffer, 'player_death', ['name', 'steamid', 'user_steamid', 'attacker_steamid', 'assister_steamid', 'attacker_team_name', 'assister_team_name', 'user_team_name', 'headshot'], ['tick', 'user_steamid', 'attacker_steamid', 'assister_steamid', 'headshot']))
+  const deaths = rows(await runParserOperation('parseEvent:player_death', () => parseEvent(buffer, 'player_death', ['name', 'steamid', 'user_steamid', 'attacker_steamid', 'assister_steamid', 'attacker_team_name', 'assister_team_name', 'user_team_name', 'headshot'], ['tick', 'user_steamid', 'attacker_steamid', 'assister_steamid', 'headshot'])))
   const ticks = deaths.map((event) => Number(field(event, 'tick'))).filter(Number.isFinite)
-  const tickRows = rows(parseTicks(buffer, ['steamid', 'team_num'], ticks))
+  const tickRows = rows(await runParserOperation('parseTicks', () => parseTicks(buffer, ['steamid', 'team_num'], ticks)))
   const sideAtTick = new Map<string, 'CT' | 'TR'>()
   for (const row of tickRows) { const tick = Number(field(row, 'tick')); const steamId = resolvePlayer(field(row, 'steamid', 'steamId')); const side = sideFromTeamNum(field(row, 'team_num', 'teamNum')); if (Number.isFinite(tick) && steamId && side) sideAtTick.set(`${tick}:${steamId}`, side) }
   const sideFromTeamName = (value: unknown): 'CT' | 'TR' | null => { const team = text(value).toUpperCase(); if (team.includes('CT') || team.includes('COUNTER')) return 'CT'; if (team === 'T' || team.includes('TERRORIST')) return 'TR'; return null }
