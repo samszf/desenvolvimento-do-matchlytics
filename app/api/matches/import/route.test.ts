@@ -59,6 +59,17 @@ describe('POST /api/matches/import', () => {
     expect(vi.mocked(parseDemo).mock.invocationCallOrder[0]).toBeLessThan(vi.mocked(del).mock.invocationCallOrder[0])
   })
 
+  it('localiza exatamente o pathname retornado com sufixo, sem modificá-lo', async () => {
+    const suffixedPathname = 'demos/user-1/furia-vs-vitality-m1-inferno-3WioTefTtc2ZZSA1gPayLlgu2bPkDv.dem'
+    vi.mocked(head).mockResolvedValue({ pathname: suffixedPathname, size: 5 } as never)
+    const { response } = await post(suffixedPathname)
+
+    expect(response.status).toBe(200)
+    expect(head).toHaveBeenCalledWith(suffixedPathname)
+    expect(get).toHaveBeenCalledWith(suffixedPathname, { access: 'private' })
+    expect(del).toHaveBeenCalledWith(suffixedPathname)
+  })
+
   it('retorna 401 sem ler o blob quando não há sessão', async () => {
     vi.mocked(auth.api.getSession).mockResolvedValue(null as never)
     const { response, body } = await post()

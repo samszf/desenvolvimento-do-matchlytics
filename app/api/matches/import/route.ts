@@ -32,7 +32,8 @@ function getResponseForError(error: unknown) {
 }
 
 export async function POST(request: Request) {
-  const requestId = randomUUID()
+  const suppliedRequestId = request.headers.get('x-request-id')
+  const requestId = suppliedRequestId && /^[0-9a-f-]{36}$/i.test(suppliedRequestId) ? suppliedRequestId : randomUUID()
   const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { 'X-Request-Id': requestId } })
   let pathname: string | undefined
   let authenticatedUserId: string | undefined
@@ -73,12 +74,12 @@ export async function POST(request: Request) {
       logDemoImportStage({ requestId, stage, result: 'failure', startedAt, error: new DemoImportRequestError('proprietário incompatível', 403), pathname })
       return json({ error: 'Acesso negado.' }, 403)
     }
-    logDemoImportStage({ requestId, stage, result: 'success', startedAt })
+    logDemoImportStage({ requestId, stage, result: 'success', startedAt, details: { processingPathname: pathname } })
 
     stage = 'BLOB_HEAD'
     startedAt = Date.now()
     const metadata = await head(pathname)
-    logDemoImportStage({ requestId, stage, result: 'success', startedAt, details: { blobSize: metadata.size } })
+    logDemoImportStage({ requestId, stage, result: 'success', startedAt, details: { blobExists: true, blobSize: metadata.size, processingPathname: pathname } })
 
     stage = 'BLOB_READ'
     startedAt = Date.now()
@@ -110,7 +111,8 @@ export async function POST(request: Request) {
         await del(pathname)
         logDemoImportStage({ requestId, stage, result: 'success', startedAt })
       } catch (error) {
-        logDemoImportStage({ requestId, stage, result: 'failure', startedAt, error, pathname })
+    logDemoImportStage({ requestId, stage, result: 'failure', startedAt, error, pathname, details: String(stage) === 'BLOB_HEAD' ? { blobExists: false, processingPathname: pathname ?? null } : undefined })
+
       }
     }
   }

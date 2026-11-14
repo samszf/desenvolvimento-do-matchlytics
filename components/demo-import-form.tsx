@@ -2,8 +2,8 @@
 
 import { useRef, useState } from 'react'
 import { useSession } from '@/lib/auth-client'
-import { upload } from '@vercel/blob/client'
 import { CheckCircle2, FileUp, Loader2, UploadCloud } from 'lucide-react'
+import { uploadDemoAndImport } from '@/lib/demo-import-client'
 import type { ImportedMatch, ImportedPlayer, ImportedStats } from '@/lib/demo-parser'
 
 const input = 'w-full rounded-lg border border-white/10 bg-[#0c1118] px-3 py-2.5 text-sm text-white outline-none focus:border-[#4c8dff]'
@@ -49,8 +49,7 @@ export function DemoImportForm() {
     setLoading(true); setError('')
     try {
       if (!session?.user.id) throw new Error('Não autenticado')
-      const blob = await upload(`demos/${session.user.id}/${file.name}`, file, { access: 'private', contentType: 'application/octet-stream', handleUploadUrl: '/api/matches/import/upload' })
-      const response = await fetch('/api/matches/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pathname: blob.pathname }) })
+      const response = await uploadDemoAndImport(file, session.user.id)
       const payload = await response.json().catch(() => null)
       if (!response.ok || !payload) throw new Error(payload?.error ?? `Falha ao analisar demo (${response.status})`)
       if (!payload.players?.length) setError('Não foi possível identificar jogadores nesta demo.')
