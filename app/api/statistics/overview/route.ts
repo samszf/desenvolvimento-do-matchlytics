@@ -5,12 +5,13 @@ import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { matches, matchStatistics } from '@/lib/db/schema'
 import { summarize, performanceScore } from '@/lib/analytics'
+import { normalizeMapName } from '@/lib/maps'
 
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() })
   if (!session?.user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
   const rows = await db.select().from(matches).leftJoin(matchStatistics, eq(matches.id, matchStatistics.matchId)).where(eq(matches.userId, session.user.id)).orderBy(desc(matches.playedAt))
-  const items = rows.map(({ matches: match, match_statistics: stats }) => ({ ...match, ...stats, mapName: match.mapId.replaceAll('-', ' '), playedAt: match.playedAt.toISOString() }))
+  const items = rows.map(({ matches: match, match_statistics: stats }) => ({ ...match, ...stats, mapKey: normalizeMapName(match.mapId).key, mapName: normalizeMapName(match.mapId).name, playedAt: match.playedAt.toISOString() }))
   const summary = summarize(items)
   const sideSummary = (side: 'ct' | 'tr') => {
     const kills = items.reduce((sum, m) => sum + (Number(m[`${side}Kills` as keyof typeof m]) || 0), 0)

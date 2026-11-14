@@ -5,6 +5,7 @@ import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { matchStatistics, matches } from '@/lib/db/schema'
+import { normalizeMapName } from '@/lib/maps'
 
 const matchSchema = z.object({
   map: z.string().min(2).max(40),
@@ -43,11 +44,13 @@ export async function POST(request: Request) {
   if (!parsed.success) return NextResponse.json({ error: 'Confira os dados informados.' }, { status: 400 })
 
   const data = parsed.data
+  const normalizedMap = normalizeMapName(data.map)
+  if (!normalizedMap.key) return NextResponse.json({ error: 'Selecione um mapa válido.' }, { status: 400 })
   const matchId = crypto.randomUUID()
   await db.insert(matches).values({
     id: matchId,
     userId: session.user.id,
-    mapId: data.map.toLowerCase().replaceAll(' ', '-'),
+    mapId: normalizedMap.key,
     playedAt: data.playedAt,
     result: data.result,
     playerScore: data.playerScore,

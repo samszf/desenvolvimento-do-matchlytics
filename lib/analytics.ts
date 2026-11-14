@@ -1,8 +1,11 @@
+import { normalizeMapName } from './maps'
+
 export type MatchLike = {
   result: string
   playerScore: number
   opponentScore: number
-  mapName?: string
+  mapName?: string | null
+  assists?: number | null
   playedAt: Date | string
   kills?: number | null
   deaths?: number | null
@@ -53,9 +56,15 @@ export const buildInsights = (matches: MatchLike[]) => {
   if (a.kd != null && b.kd != null && a.kd > b.kd * 1.1) insights.push(`Seu K/D aumentou nos últimos ${recent.length} jogos.`)
   if (a.adr != null && b.adr != null && a.adr < b.adr * .9) insights.push(`Seu ADR apresentou queda nas últimas ${recent.length} partidas.`)
   if (a.winRate != null && b.winRate != null && a.winRate > b.winRate + 10) insights.push(`Seu Win Rate aumentou nas últimas ${recent.length} partidas.`)
-  const maps = new Map<string, MatchLike[]>()
-  matches.forEach(m => { if (m.mapName) maps.set(m.mapName, [...(maps.get(m.mapName) ?? []), m]) })
-  const best = [...maps.entries()].filter(([, ms]) => ms.length >= 2).sort((x, y) => (summarize(y[1]).kd ?? 0) - (summarize(x[1]).kd ?? 0))[0]
-  if (best) insights.push(`${best[0]} apresenta seu maior K/D médio (${best[1].length} partidas).`)
+  const maps = new Map<string, { name: string; matches: MatchLike[] }>()
+  matches.forEach((match) => {
+    const normalized = normalizeMapName(match.mapName)
+    if (!normalized.key || !normalized.name) return
+    const group = maps.get(normalized.key) ?? { name: normalized.name, matches: [] }
+    group.matches.push(match)
+    maps.set(normalized.key, group)
+  })
+  const best = [...maps.values()].filter(({ matches: group }) => group.length >= 2).sort((a, b) => (summarize(b.matches).kd ?? 0) - (summarize(a.matches).kd ?? 0))[0]
+  if (best) insights.push(`${best.name} apresenta seu maior K/D médio (${best.matches.length} partidas).`)
   return insights
 }
