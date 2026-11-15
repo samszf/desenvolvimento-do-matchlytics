@@ -2,8 +2,8 @@
 
 import { useRef, useState } from 'react'
 import { useSession } from '@/lib/auth-client'
-import { upload } from '@vercel/blob/client'
 import { CheckCircle2, FileUp, Loader2, UploadCloud } from 'lucide-react'
+import { uploadDemoAndImport } from '@/lib/demo-import-client'
 import type { ImportedMatch, ImportedPlayer, ImportedStats } from '@/lib/demo-parser'
 
 const input = 'w-full rounded-lg border border-white/10 bg-[#0c1118] px-3 py-2.5 text-sm text-white outline-none focus:border-[#4c8dff]'
@@ -43,22 +43,23 @@ export function DemoImportForm() {
   const [adr, setAdr] = useState('')
   const [kast, setKast] = useState('')
 
-  function choose(next?: File) { if (!next) return; if (!next.name.toLowerCase().endsWith('.dem')) { setError('Selecione somente arquivos .dem.'); return }; setFile(next); setData(null); setPlayer(''); setError('') }
+  function choose(next?: File) { if (!next) return; if (!next.name.toLowerCase().endsWith('.dem')) { setError('Selecione somente arquivos .dem.'); return }; if (next.size > 300 * 1024 * 1024) { setError('O arquivo deve ter no máximo 300 MB.'); return }; setFile(next); setData(null); setPlayer(''); setError('') }
   async function analyze() {
     if (!file) return
     setLoading(true); setError('')
     try {
       if (!session?.user.id) throw new Error('Não autenticado')
-      const blob = await upload(`demos/${session.user.id}/${file.name}`, file, { access: 'private', contentType: 'application/octet-stream', handleUploadUrl: '/api/matches/import/upload' })
-      const response = await fetch('/api/matches/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pathname: blob.pathname }) })
+      const response = await uploadDemoAndImport(file, session.user.id)
       const payload = await response.json().catch(() => null)
       if (!response.ok || !payload) throw new Error(payload?.error ?? `Falha ao analisar demo (${response.status})`)
       if (!payload.players?.length) setError('Não foi possível identificar jogadores nesta demo.')
       else { setData(payload); setPlayer('') }
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
+      const message = error instanceof Error ? error.message : ''
       const normalized = message.toLowerCase()
-      setError(normalized.includes('unreachable') || normalized.includes('wasm trap') ? 'O analisador foi iniciado, mas esta demo não pôde ser lida. Use um arquivo .dem válido do CS2 (de preferência uma demo recém-gravada).' : message || 'Não foi possível analisar esta demo. Verifique se o arquivo é uma demo válida do Counter-Strike 2.')
+      const safeMessages = new Set(['Não autenticado', 'Não autenticado.', 'Acesso negado.', 'Demo não encontrada.', 'Demo não encontrada no armazenamento.'])
+      const safeServerMessage = safeMessages.has(message) || message.startsWith('Não foi possível interpretar esta demo.') || message.startsWith('O armazenamento está temporariamente indisponível')
+      setError(normalized.includes('unreachable') || normalized.includes('wasm trap') ? 'O analisador não conseguiu ler esta demo. Use um arquivo .dem válido do CS2.' : safeServerMessage ? message : 'Não foi possível enviar ou analisar esta demo. Verifique se o arquivo é válido e tente novamente.')
     } finally { setLoading(false) }
   }
 
