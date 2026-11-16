@@ -482,3 +482,59 @@ Os feedbacks dos participantes também contribuíram para identificar possibilid
 ---
 
 ## 🔭 Possibilidades de evolução
+
+As contribuições recebidas dos participantes e as limitações identificadas durante o desenvolvimento apontam oportunidades para versões futuras:
+
+- Resumos visuais das partidas para compartilhamento.
+- Guia simplificado de importação de demos.
+- Estatísticas recreativas e premiações simbólicas.
+- Métricas avançadas de clutch e primeiros abates.
+- Análise de eficiência de utilitárias.
+- Mapas de calor de eliminações e mortes.
+- Anotações e marcações de rounds.
+- Recursos de revisão de demos em conjunto.
+- Ampliação dos insights automatizados.
+
+Esses recursos representam possibilidades de evolução e não devem ser considerados funcionalidades já disponíveis na versão atual.
+
+---
+
+## 🎓 Contexto acadêmico
+
+Projeto desenvolvido como parte da disciplina **Projeto Integrador em Computação II (PJI240)** do curso de Engenharia de Computação da Universidade Virtual do Estado de São Paulo (UNIVESP).
+
+**Tema:** Plataforma Web para Análise de Desempenho em Counter-Strike 2.
+
+**Autor:** Samuel de Souza Freire.
+
+**Metodologia:** ouvir, criar e implementar.
+
+O desenvolvimento permitiu aplicar conhecimentos de programação, algoritmos, estruturas de dados, bancos de dados, desenvolvimento web, engenharia de software, análise de dados, segurança e acessibilidade.
+
+---
+
+## 📖 Referências
+
+ALONSO-FERNÁNDEZ, Cristina et al. Game Learning Analytics: Blending Visual and Data Mining Techniques to Improve Serious Games and to Better Understand Player Learning. *Journal of Learning Analytics*, v. 9, n. 3, p. 32-49, 2022. DOI: https://doi.org/10.18608/jla.2022.7633.
+
+BIAŁECKI, Andrzej; MICHALAK, Bartłomiej; GAJEWSKI, Jan. Esports Training, Periodization, and Software—A Scoping Review. *Applied Sciences*, v. 14, n. 22, art. 10354, 2024. DOI: https://doi.org/10.3390/app142210354.
+
+HERREWIJN, Laura; CHARLEER, Sven. The State of Esports Analytics: A Thematic Analysis of Tools, Challenges, and Emerging Directions. In: BEKIR, Seyhan (ed.). *The Psychology of Esports*. Cham: Springer, 2026. p. 133-148. DOI: https://doi.org/10.1007/978-3-032-25090-2_12.
+
+HORST, Robin; ZANDER, Stefan Manuel; DÖRNER, Ralf. CS:Show – An Interactive Visual Analysis Tool for First-Person Shooter eSports Match Data. In: *Entertainment Computing – ICEC 2021*. Cham: Springer, 2021. p. 15-27. DOI: https://doi.org/10.1007/978-3-030-89394-1_2.
+
+LAIHOE. demoparser: Counter-Strike 2 replay parser for Python and JavaScript. GitHub. Disponível em: https://github.com/LaihoE/demoparser.
+
+RETS, Irina et al. Exploring critical factors of the perceived usefulness of a learning analytics dashboard for distance university students. *International Journal of Educational Technology in Higher Education*, v. 18, art. 46, 2021. DOI: https://doi.org/10.1186/s41239-021-00284-9.
+
+UNIVERSIDADE VIRTUAL DO ESTADO DE SÃO PAULO (UNIVESP). Orientações para alunos de Projeto Integrador. São Paulo: UNIVESP, 2021. Disponível em: https://assets.univesp.br/Proj_Integrador/2023-1S/Orientacoes_para_alunos_de_PI.pdf.
+
+WORLD WIDE WEB CONSORTIUM (W3C). Web Content Accessibility Guidelines (WCAG) 2.2. W3C Recommendation, 2024. Disponível em: https://www.w3.org/TR/WCAG22/.
+
+---
+
+## 📄 Licença
+
+Este projeto foi desenvolvido para fins acadêmicos no âmbito do Projeto Integrador da UNIVESP.
+
+A definição de uma licença de distribuição e reutilização do código deve ser realizada pelo responsável pelo repositório.
